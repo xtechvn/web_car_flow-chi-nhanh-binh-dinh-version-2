@@ -1,0 +1,75 @@
+﻿@using Entities.ViewModels
+@using Entities.ViewModels.Car;
+@using Entities.Models;
+@using Utilities.Contants;
+@{
+
+    var title = "Báo cáo thống kê ngày";
+}
+@model List<VehicleInspectionTimeProductDeliveryModel>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Giờ đăng ký online</th>
+            <th>Giờ đăng tài</th>
+            <th>Biển số xe</th>
+            <th style="min-width: 200px !important;">Tên KH (Trại, đại lý)</th>
+            <th> TL hàng cho phép</th>
+            <th>Máng</th>          
+            <th>Xe nâng</th>
+            <th>Giờ xe vào máng</th>
+            <th>Giờ xe ra máng</th>
+            <th>Cân vào</th>
+            <th>Cân ra</th>
+            <th>NET WEIGHT</th>
+            <th>T.Lương đơn hàng</th>
+            <th>Số bao</th>
+            <th>Trừ bì</th>
+            <th>Lệch</th>
+            <th>LIMIT</th>
+            <th>Duyệt</th>
+            <th>Giờ cân vào</th>
+            <th>Giờ cân ra</th>       
+        </tr>
+    </thead>
+    <tbody>
+
+        @if (Model != null && Model.Count > 0)
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.RecordNumber</td>
+                    <td>@(item.RegisterDateOnline != null ? item.RegisterDateOnline.Value.ToString("HH:mm dd/MM/yyyy") : "")</td>
+                    <td>@(item.VehicleArrivalDate != null ? item.VehicleArrivalDate.Value.ToString("HH:mm dd/MM/yyyy") : "")</td>
+                    <td>@item.VehicleNumber</td>
+                    <td style="min-width: 200px !important;">
+                        <div style="white-space: pre-line;">
+                            @item.CustomerName
+                        </div>
+                    </td>
+                    <td>@item.VehicleWeightMax</td>
+                    <td>@item.TroughTypes</td>
+
+                    <td>@item.Forklift</td>
+                    <td>@(item.VehicleWeighingTimeComeIn != null ? item.VehicleWeighingTimeComeIn.Value.ToString("HH:mm dd/MM/yyyy") : "")</td> @*bước 1*@
+                    <td>@(item.VehicleWeighingTimeComeOut != null ? item.VehicleWeighingTimeComeOut.Value.ToString("HH:mm dd/MM/yyyy") : "")</td>@*Bước 3*@
+                    <td>@(item.VehicleWeightIn != null ? item.VehicleWeightIn.Value.ToString("N0") : "0")</td>
+                    <td>@(item.VehicleWeightOut!= null ? item.VehicleWeightOut.Value.ToString("N0") : "0")</td>
+                    <td>@((item.NetWeight != null ? item.NetWeight.Value : 0).ToString("N0"))</td>
+                    <td> @((item.OrderWeight != null ? item.OrderWeight.Value : 0).ToString("N2"))</td>
+                    <td>@((item.TotalBag != null ? item.TotalBag.Value : 0).ToString("N2"))</td>
+                    <td>@((item.DeductionWeight != null ? item.DeductionWeight.Value : 0).ToString("N2"))</td>
+                    <td>@((item.DifferenceWeight != null ? item.DifferenceWeight.Value : 0).ToString("N0"))</td>
+                    <td>@item.LimitValue</td>
+                    <td>@item.ApproveStatus</td>
+                    <td>@(item.VehicleTroughTimeComeOut != null ? item.VehicleTroughTimeComeOut.Value.ToString("HH:mm dd/MM/yyyy") : "")</td> @*bước 1*@
+                    <td>@(item.VehicleWeighingTimeComplete != null ? item.VehicleWeighingTimeComplete.Value.ToString("HH:mm dd/MM/yyyy") : "")</td> @*bước 1*@
+                </tr>
+            }
+        }
+       
+    </tbody>
+</table>

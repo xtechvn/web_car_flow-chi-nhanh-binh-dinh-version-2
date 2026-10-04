@@ -1,0 +1,69 @@
+﻿@using Entities.ViewModels.Car;
+@using Entities.Models;
+@{
+    var date = DateTime.Now;
+    var LOAD_TYPE = (List<AllCode>)ViewBag.LOAD_TYPE;
+}
+<main class="main-section">
+    <div class="table-head">
+        <a href="/" class="btn-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#344054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+        </a>
+        <h2 class="table-title">Báo cáo đo lường thời gian sản xuất</h2>
+     
+    </div>
+
+    <div class="filter-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 0fr)) !important;">
+        <div class="form-group">
+            <select class="form-control" id="loadType" onchange="time_product_delivery.Seach()" style="min-width:100px; max-width:150px;">
+                <option value="-1">Tất cả</option>
+                @if(LOAD_TYPE!=null && LOAD_TYPE.Count>0){
+                    foreach (var item in LOAD_TYPE)
+                    {
+                        <option value="@item.CodeValue">@item.Description</option>
+
+                    }
+                }
+            </select>
+            <label for="plant">Nhóm tài</label>
+        </div>
+
+        <div class="form-group">
+            <div class="date-picker">
+                <input type="date" id="date_time_Car" max="@date.ToString("yyyy-MM-dd")" onchange="time_product_delivery.Seach()" value="@date.ToString("yyyy-MM-dd")" style="min-width:100px; max-width:150px;">
+            </div>
+            <label for="plant">Ngày</label>
+        </div>
+
+        <div class="form-group">
+            <select id="Time" onchange="time_product_delivery.getDateRangeBySelect()" style="min-width:100px; max-width:150px;">
+                <option value="1">Hôm nay</option>
+                <option value="2">Hôm qua</option>
+                <option value="3">Tuần này</option>
+                <option value="4">Tuần trước</option>
+                <option value="5">Tháng này</option>
+                <option value="6">Tháng tước</option>
+               
+            </select>
+            <label for="xenang">Thời gian</label>
+        </div>
+        <div  class="form-group">
+            <a class="btn-search btn-default settings-btn" type="button" onclick="time_product_delivery.Export()" id="btnExport" style="height: 38px; display: flex; align-items: center; padding: 0 16px; border-radius: 8px; border: 1px solid #d0d5dd; background: #fff; font-size: 14px; color: #444; margin-right: 15px;">
+                 xuất file Excel
+            </a>
+        </div>
+      
+    </div>
+     <div class="table-wrapper simple-scrollbar ss-container" style="height: 310px;">
+        <div class="ss-wrapper">
+            <div class="ss-content" id="Grid-ListTimeProductDelivery">
+            </div>
+        </div><div class="ss-scroll ss-hidden"></div>
+    </div>
+
+</main>
+@section scripts {
+    <script src="~/modules/timeproductdelivery.js"></script>
+}

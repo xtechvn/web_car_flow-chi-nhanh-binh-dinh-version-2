@@ -1,0 +1,113 @@
+﻿@{
+    Layout = null;
+
+}
+@using Entities.Models
+@using Entities.ViewModels
+@model InspectionModel
+<style>
+    .error{
+        color:red;
+    }
+</style>
+<form id="form_inspection" onsubmit="return false">
+    @if (Model == null)
+    {
+        <input type="hidden" id="Id" value="0" />
+        <div class="form-grid">
+            <!-- Họ tên -->
+            <div class="form-group">
+                <label>Biển số xe <span>*</span></label>
+                <input type="text" id="VehicleNumber" name="VehicleNumber" placeholder="Nhập tên menu">
+            </div>
+
+            <!-- Ngày sinh -->
+            <div class="form-group">
+                <label>Trọng lượng(Kg)<span>*</span></label>
+                <input type="text" id="VehicleWeight"  class="currency" name="VehicleWeight" />
+            </div>
+            <div class="form-group">
+                <label>Trọng lượng tối đa(Kg)<span>*</span></label>
+                <input type="text" id="VehicleWeightMax" class="currency" name="VehicleWeightMax" style="background: #d0d5dd;" disabled />
+            </div>
+            <!-- Số điện thoại -->
+            <div class="form-group">
+                <label>Ngày đăng kiểm<span>*</span></label>
+                <input type="date" id="InspectionDate" name="InspectionDate">
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+                <label>Ngày hết hạn đăng kiểm<span>*</span></label>
+                <input type="date" id="ExpirationDate" name="ExpirationDate">
+            </div>
+
+        </div>
+        <div class="actions">
+            <button class="cancel">Bỏ qua</button>
+            <button class="confirm" onclick="_inspection.OnSave()">Thêm mới</button>
+        </div>
+    }
+    else
+    {
+
+        <input type="hidden" id="Id" value="@Model.Id" />
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Biển số xe <span>*</span></label>
+                <input type="text" style="background:#69696945" id="VehicleNumber" name="VehicleNumber" placeholder="Nhập tên menu" value="@Model.VehicleNumber" disabled>
+            </div>
+
+            <div class="form-group">
+                <label>Trọng lượng(Kg)<span>*</span></label>
+                <input class="currency" type="text" id="VehicleWeight" name="VehicleWeight" value="@(Model.VehicleWeight==null?0:((decimal)Model.VehicleWeight).ToString("N0"))" />
+            </div> 
+            <div class="form-group">
+                <label>Trọng lượng tối đa(Kg)<span>*</span></label>
+                <input class="currency" type="text" id="VehicleWeightMax" name="VehicleWeightMax" value="@(Model.VehicleWeightMax==null?(((double)Model.VehicleWeight)*1.1).ToString("N0"): ((decimal)Model.VehicleWeightMax).ToString("N0"))" style="background: #d0d5dd;" disabled />
+            </div>
+
+            <div class="form-group">
+                <label>Ngày đăng kiểm<span>*</span></label>
+                <input type="date" id="InspectionDate" name="InspectionDate" value="@Model.InspectionDate.Value.ToString("yyyy-MM-dd")">
+            </div>
+
+            <div class="form-group">
+                <label>Ngày hết hạn đăng kiểm<span>*</span></label>
+                <input type="date" id="ExpirationDate" name="ExpirationDate" value="@Model.ExpirationDate.Value.ToString("yyyy-MM-dd")">
+            </div>
+
+        </div>
+        <div class="actions">
+            <button class="cancel">Bỏ qua</button>
+            <button class="confirm" onclick="_inspection.OnSave()">Cập nhật</button>
+        </div>
+      
+    }
+
+</form>
+
+<script>
+    $('#VehicleNumber').on('input', function () {
+        let value = this.value
+                    .toUpperCase()                 // chuyển IN HOA
+                    .replace(/[^0-9A-Z\/]/g, '');  // chỉ giữ chữ, số, /
+
+        // Xóa dấu / thừa (//// → /)
+        value = value.replace(/\/+/g, '/');
+
+        this.value = value;
+    });
+    $('#VehicleWeight').on('input', function () {
+        var vehicleWeight = this.value
+        if (vehicleWeight != undefined && vehicleWeight != "") {
+            vehicleWeight = parseFloat(vehicleWeight.replaceAll(",","")) || 0;
+            var max = vehicleWeight * 1.1;
+
+            $('#VehicleWeightMax').val(max.toLocaleString('en-US'));
+        } else {
+            $('#VehicleWeightMax').val(0);
+        }
+      
+    });
+</script>

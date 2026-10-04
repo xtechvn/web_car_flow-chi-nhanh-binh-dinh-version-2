@@ -1,0 +1,47 @@
+﻿<form id="form_update_name" onsubmit="return false">
+
+    <input type="hidden" id="Id" value="@ViewBag.Id" />
+    <div class="form-grid">
+
+        <div class="form-group">
+            <label>Tên khách hàng</label>
+            <textarea id="CustomerName" style="min-height:150px; width:100%" value="@ViewBag.name">@ViewBag.name</textarea>
+        </div>
+
+    </div>
+    <div class="actions">
+        <button class="cancel">Bỏ qua</button>
+        <button class="confirm" onclick="_processing_is_loading.AddOrUpdateName()">Cập nhật</button>
+    </div>
+
+
+</form>
+
+
+<script>
+    const textarea = document.getElementById('CustomerName');
+
+    textarea.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            if (e.shiftKey || e.ctrlKey) {
+                e.preventDefault(); // chặn hành vi mặc định
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const value = textarea.value;
+
+                // chèn \n vào vị trí con trỏ
+                textarea.value = value.substring(0, start) + "\n" + value.substring(end);
+                // đưa con trỏ xuống sau ký tự \n
+                textarea.selectionStart = textarea.selectionEnd = start + 1;
+
+                
+            } else {
+                // Enter thường => gửi comment
+
+             
+
+            }
+        }
+    });
+
+</script>

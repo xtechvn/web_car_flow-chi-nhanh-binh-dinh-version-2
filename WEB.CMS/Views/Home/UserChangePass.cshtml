@@ -1,0 +1,106 @@
+﻿@{
+    Layout = null;
+}
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+
+@using Entities.Models
+@using Entities.ViewModels
+@model UserDataViewModel
+
+<div class="change-pass-popup p-4">
+    <h5 class="fw-bold mb-4 text-dark border-bottom pb-2">Thay đổi mật khẩu cá nhân</h5>
+
+    <div class="change-pass-card p-4 shadow-sm rounded-3">
+        <h6 class="fw-semibold text-primary mb-3">Bảo mật</h6>
+
+        <div class="d-flex align-items-center mb-3">
+            @* <img src="~/images/icons/changer.svg" alt="Đổi mật khẩu" width="22" class="me-2 opacity-75" /> *@
+            <span class="fw-semibold fs-6">Đổi mật khẩu</span>
+        </div>
+
+        <p class="text-muted small mb-4">
+            Bạn nên sử dụng mật khẩu mạnh mà mình chưa sử dụng ở đâu khác.
+        </p>
+
+        <form id="form-user-change-password">
+            <input type="hidden" asp-for="@Model.Id" />
+
+            <div class="mb-3">
+                <label for="Password" class="form-label fw-medium">Mật khẩu hiện tại</label>
+                <input type="password" class="form-control form-control-lg" id="Password" name="Password" placeholder="Nhập mật khẩu hiện tại">
+            </div>
+
+            <div class="mb-3">
+                <label for="NewPassword" class="form-label fw-medium">Mật khẩu mới</label>
+                <input type="password" class="form-control form-control-lg" id="NewPassword" name="NewPassword" placeholder="Nhập mật khẩu mới">
+            </div>
+
+            <div class="mb-4">
+                <label for="ReNewPassword" class="form-label fw-medium">Gõ lại mật khẩu mới</label>
+                <input type="password" class="form-control form-control-lg" id="ReNewPassword" name="ReNewPassword" placeholder="Nhập lại mật khẩu mới">
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <button type="button" class="btn btn-primary px-4" onclick="_account.OnChangePassword()">
+                    <i class="fa fa-floppy-o me-1"></i> Lưu
+                </button>
+                <button type="button" class="btn btn-outline-secondary px-4" onclick="$.magnificPopup.close();">
+                    <i class="fa fa-ban me-1"></i> Bỏ qua
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<style>
+    .error{
+        color:red;
+    }
+    .change-pass-popup {
+        background: #fff;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .change-pass-card {
+        border: 1px solid #e5e7eb;
+        background-color: #fafafa;
+    }
+
+        .change-pass-card h6 {
+            border-left: 3px solid #0d6efd;
+            padding-left: 8px;
+        }
+
+    .form-label {
+        color: #333;
+        margin-bottom: 6px;
+    }
+
+    .form-control {
+        border: 1px solid #ced4da;
+        border-radius: 6px;
+        padding: 10px 12px;
+        transition: all 0.2s ease;
+    }
+
+        .form-control:focus {
+            border-color: #0d6efd;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.1);
+        }
+
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+
+    .btn-outline-secondary {
+        border-color: #ccc;
+        color: #555;
+    }
+
+        .btn-outline-secondary:hover {
+            background-color: #f1f1f1;
+            color: #000;
+        }
+</style>

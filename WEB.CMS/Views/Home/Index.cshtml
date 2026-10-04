@@ -1,0 +1,84 @@
+﻿@using Entities.Models
+@{
+    var _ListMenu = (List<Menu>)ViewBag.Menu;
+    var ListNotify = (List<Menu>)ViewBag.GetListNotify;
+    var _ParentMenus = _ListMenu.Where(s => s.ParentId == (int)ViewBag.ParentId).OrderBy(s => s.OrderNo);
+    var ActivedParentId = (int)ViewBag.ParentId;
+    var ActivedMenuId = (int)ViewBag.MenuId;
+
+    void GenChildMenu(int parentId)
+    {
+        var childDatas = _ListMenu.Where(s => s.ParentId == parentId);
+        @if (childDatas != null && childDatas.Any())
+        {
+            @foreach (var subMenu in childDatas)
+            {
+
+                <li>
+                    <a class="@(subMenu.Id == ActivedMenuId ? "active" : string.Empty)" href="@subMenu.Link">
+                        <img src="@subMenu.Icon">
+                        @subMenu.Name
+                    </a>
+                </li>
+
+                GenChildMenu(subMenu.Id);
+            }
+        }
+    }
+}
+@{
+    ViewData["Title"] = "Cargill";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<main class="main-section">
+
+
+
+    <div class="grid">
+        @{
+            var childDatas = _ListMenu.Where(s => s.ParentId == ActivedMenuId);
+            @if (childDatas != null && childDatas.Any())
+            {
+                @foreach (var subMenu in childDatas)
+                {
+
+                    <a href="@subMenu.Link" class="card">
+                        <img src="@subMenu.Icon" alt="">
+                        <h3>@subMenu.Name</h3>
+                    </a>
+
+                }
+            }
+        }
+
+        @*<a href="/Car/CartoFactory" class="card">
+            <img src="images/icons/icon-1.svg" alt="">
+            <h3>Danh sách xe đến nhà máy</h3>
+        </a>
+        <a href="/Car/ProcessingIsLoading" class="card">
+            <img src="images/icons/icon-2.svg" alt="">
+            <h3>Xử lý đăng tải</h3>
+        </a>
+        <a href="/Car/CallTheScale" class="card">
+            <img src="images/icons/icon-3.svg" alt="">
+            <h3>Danh sách gọi xe vào cân</h3>
+        </a>
+        <a href="/Car/WeighedInput" class="card">
+            <img src="images/icons/icon-4.svg" alt="">
+            <h3>Danh sách xe đã cân đầu vào</h3>
+        </a>
+        <a href="/ListCar/CarCallList" class="card">
+            <img src="images/icons/icon-5.svg" alt="">
+            <h3>Danh sách gọi xe vào máng xuất</h3>
+        </a>
+
+        <a href="/ListCar/ListVehicles " class="card">
+            <img src="images/icons/icon-7.svg" alt="">
+            <h3>Danh sách xe đã cân ra</h3>
+        </a>*@
+
+    </div>
+
+</main>

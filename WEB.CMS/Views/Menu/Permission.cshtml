@@ -1,0 +1,40 @@
+﻿@{
+    Layout = null;
+}
+@using Entities.Models
+@using Entities.ViewModels
+@model MenuPermissionModel
+
+@{
+    var permissions = (IEnumerable<Permission>)ViewBag.Permissions;
+}
+
+<div class="row row_min">
+    <div class="grid-item col-md-12">
+        <div class="form-default3 pd10">
+            <div class="row row_min">
+                <label class="lbl gray">Danh sách các quyền thuộc menu</label>
+                <input type="hidden" id="ip_menu_id" value="@Model.menu_id" />
+                <div class="grid grid__2 gap10 mb20" id="block_permission_options">
+                    @if (permissions != null && permissions.Any())
+                    {
+                        foreach (var item in permissions)
+                        {
+                            <label class="check-list">
+                                <input type="checkbox" class="ckb__permission" value="@item.Id"
+                                       @(Model.permission_ids.Contains(item.Id) ? "checked" : string.Empty) />
+                                <span class="checkmark"></span>
+                                @item.Name
+                            </label>
+                        }
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="actions">
+    <button class="cancel"  onclick="$.magnificPopup.close();">Bỏ qua</button>
+    <button class="confirm" onclick="_menu.OnSavePermission()">Cập nhật</button>
+</div>
+

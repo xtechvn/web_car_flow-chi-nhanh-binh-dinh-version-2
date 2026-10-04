@@ -1,0 +1,252 @@
+﻿@using Entities.ViewModels.Car;
+@using Entities.Models;
+@{
+    Layout = null;
+    var AllCode = (List<AllCode>)ViewBag.AllCode;
+    var AllCode2 = (List<AllCode>)ViewBag.AllCode2;
+    var AllCode3 = (List<AllCode>)ViewBag.AllCode3;
+    var AllCode4 = (List<AllCode>)ViewBag.AllCode4;
+}
+@model List<CartoFactoryModel>
+<style>
+
+    .icon-check {
+        cursor: pointer;
+        content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M15.9422 1.06754L5.94223 11.0675C5.88418 11.1256 5.81525 11.1717 5.73938 11.2032C5.66351 11.2347 5.58218 11.2508 5.50004 11.2508C5.41791 11.2508 5.33658 11.2347 5.2607 11.2032C5.18483 11.1717 5.1159 11.1256 5.05785 11.0675L0.682855 6.69254C0.565579 6.57526 0.499695 6.4162 0.499695 6.25035C0.499695 6.0845 0.565579 5.92544 0.682855 5.80816C0.80013 5.69088 0.95919 5.625 1.12504 5.625C1.29089 5.625 1.44995 5.69088 1.56723 5.80816L5.50004 9.74175L15.0579 0.18316C15.1751 0.0658843 15.3342 -1.2357e-09 15.5 0C15.6659 1.2357e-09 15.825 0.0658843 15.9422 0.18316C16.0595 0.300435 16.1254 0.459495 16.1254 0.625347C16.1254 0.7912 16.0595 0.95026 15.9422 1.06754Z" fill="%233A8245"/></svg>')
+    }
+
+    .data-table input {
+        width: 60% !important;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .badge-danger {
+        background-color: red; /* đỏ */
+    }
+
+    .badge-warning {
+        background-color: orange; /* vang */
+    }
+
+    .badge-success {
+        background-color: #4BAC4D; /* xanh */
+    }
+
+</style>
+@if (Model != null && Model.Count > 0)
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Giờ xe đến</th>
+                <th>Biển số xe</th>
+                <th style="min-width:250px;">Tên khách hàng (Trại, đại lý)</th>
+                <th>Tên lái xe</th>
+
+                <th>KH Ghi chú</th>
+                <th>BV ghi chú</th>
+                <th>CS ghi chú</th>
+                <th>TT đăng kiểm</th>
+                <th>Tải trọng xe (kg)</th>
+                <th style="max-width:150px;">TL thực tế (kg)</th>
+                <th>KH nội bộ</th>
+                <th>Nhóm tài</th>
+                <th>Tình trạng</th>
+            </tr>
+        </thead>
+        <tbody id="dataBody-@ViewBag.type">
+            @foreach (var item in Model)
+            {
+                <tr class="CartoFactory_@item.Id" data-queue="@(((DateTime)item.VehicleArrivalDate).ToString("HH:mm dd/MM/yyyy"))">
+                    <td>
+                        @item.RecordNumber
+                    </td>
+                    <td>@(item.VehicleArrivalDate != null ? ((DateTime)item.VehicleArrivalDate).ToString("HH:mm dd/MM/yyyy") : "")</td>
+                    <td>
+                        @item.VehicleNumber
+                        @if (ViewBag.type == 0)
+                        {
+                            <a class="cursor-pointer" style="margin-left:10px;" onclick="_processing_is_loading.AddOrUpdateVehicleNumber(@item.Id)" title="Chỉnh sửa biển số xe">
+                                <i class="icon-edit"></i>
+                            </a>
+                        }
+
+                    </td>
+                    <td>
+                        <div style="display: flex; align-items: center">
+                            <div style="white-space: pre-line;">
+                                @item.CustomerName
+
+                            </div>
+                            <div>
+                                @if (ViewBag.type == 0)
+                                {
+                                    <a class="cursor-pointer" style="margin-left:10px;" onclick="_processing_is_loading.AddOrUpdateNamePopup(@item.Id)" title="Chỉnh sửa khách hàng">
+                                        <i class="icon-edit"></i>
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div>@item.DriverName</div>
+                        <div>@item.PhoneNumber</div>
+
+                    </td>
+                    <td>@item.LicenseNumber</td>
+                    <td>@item.ProtectNotes</td>
+                    <td>
+                     @if(ViewBag.type == 0){
+                      <textarea  class="CS_Note" name="CS_Note" value="@item.CSNotes">@item.CSNotes</textarea>  
+                     }else{
+                          <div style="display: flex; align-items: center">
+                            <div style="white-space: pre-line;">
+                             @item.CSNotes
+                            </div>                      
+                        </div> 
+                     }
+                    
+                    </td>
+                    <td>
+                        @{
+                            switch (item.TrangThai)
+                            {
+                                case 1:
+                                    <span class="badge badge-warning">Chưa có</span>
+                                    break;
+                                case 2:
+                                    <span class="badge badge-success">Còn hạn</span>
+                                    break;
+                                case 3:
+                                    @:<span class="badge badge-warning">Sắp hết hạn</span>
+                                    break;
+                                case 4:
+                                    @:<span class="badge badge-danger">Hết hạn</span>
+                                    break;
+
+                            }
+                        }
+                        @if (ViewBag.type == 0)
+                        {
+                            <a class="cursor-pointer" style="margin-left:10px;" onclick="_inspection.ShowAddOrUpdate(@item.InspectionId)" title="Chỉnh sửa đăng kiểm">
+                                <i class="icon-edit"></i>
+                            </a>
+                        }
+                    </td>
+                    <td>@(((decimal)item.VehicleWeightMax).ToString("N0"))</td>
+                    <td>
+                        @if (ViewBag.type == 1)
+                        {
+                            <div class="">
+                                <p class="  Vehicle-Status currency">
+                                    @(((decimal)item.VehicleLoadTaken).ToString("N0"))
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="">
+                                <p class="">
+                                    <input type="text"
+                                           class="input-form VehicleLoadTaken currency"
+                                           maxlength="8"
+                                           oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0,8);"
+                                           placeholder="Vui lòng nhập trọng lượng thực tế" value="@(item.VehicleLoadTaken >0?((decimal)item.VehicleLoadTaken).ToString("N0"):"")" />
+                                </p>
+                            </div>
+                        }
+                    </td>               
+                    <td>
+                         @item.RankName
+                    </td>
+                    <td>
+                        @if (ViewBag.type == 1)
+                        {
+                            <div class="">
+                                <p class="  Vehicle-Status" data-type="1">
+                                    @item.LoadTypeName
+                                </p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="status-dropdown">
+                                <button class="dropdown-toggle  Vehicle-Status" data-type="1" data-options='[
+                                @foreach (var allcode in AllCode2)
+                                {
+                                    if (allcode.CodeValue == 0)
+                                    {
+                                        @:{"text":"@allcode.Description","class":"status-green","value":"@allcode.CodeValue"}@(allcode != AllCode2.Last() ? "," : "")
+
+                                    }
+                                    else
+                                    {
+                                        @:{"text":"@allcode.Description","class":"status-normal","value":"@allcode.CodeValue"}@(allcode != AllCode2.Last() ? "," : "")
+
+                                    }
+
+
+                                }
+                                                        ]'>
+                                    @item.LoadTypeName
+                                </button>
+                            </div>
+                        }
+                    </td>
+                    <td>
+                        <div class="status-dropdown">
+                            <button class="dropdown-toggle " data-options='[
+                            @foreach (var allcode in AllCode)
+                            {
+
+                                @:{"text":"@allcode.Description","value":"@allcode.CodeValue"}@(allcode != AllCode.Last() ? "," : "")
+
+                            }
+                                                ]'>
+                                @item.LoadingStatusName
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+
+            }
+
+        </tbody>
+    </table>
+}
+else
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Giờ xe đến</th>
+                <th>Biển số xe</th>
+                <th>Tên khách hàng (Trại, đại lý)</th>
+                <th>Tên lái xe</th>
+
+                <th>KH Ghi chú</th>
+                <th>BV ghi chú</th>
+                <th>CS ghi chú</th>
+                <th>TT đăng kiểm</th>
+                <th>Tải trọng xe (kg)</th>
+                <th style="max-width:150px;">TL thực tế (kg)</th>
+                <th>KH nội bộ</th>
+                <th>Nhóm tài</th>
+                <th>Tình trạng</th>
+            </tr>
+        </thead>
+        <tbody id="dataBody-@ViewBag.type">
+        </tbody>
+    </table>
+}
+

@@ -1,0 +1,98 @@
+﻿@{
+    Layout = null;
+    var stt = 1;
+}
+@using Entities.Models
+@using Entities.ViewModels
+@model List<InspectionModel>
+<style>
+    .badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .badge-danger {
+        background-color: red; /* đỏ */
+    }
+    .badge-warning {
+        background-color: orange; /* vang */
+    }
+    .badge-success {
+        background-color: #4BAC4D; /* xanh */
+    }
+</style>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th style="width: 20px;">STT</th>
+            <th>Biển số xe</th>
+            <th>Ngày đăng kiểm</th>
+            <th>Ngày hết hạn đăng kiểm</th>
+            <th>Trọng lượng xe theo đăng kiểm</th>
+            <th>Trọng lượng xe tối đa</th>
+            <th>Trạng thái</th>
+            <th>Tác vụ</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@stt</td>
+                    <td>@item.VehicleNumber</td>
+                    <td>@item.InspectionDate?.ToString("dd/MM/yyyy")</td>
+                    <td>@item.ExpirationDate?.ToString("dd/MM/yyyy")</td>
+                    <td>@(((decimal)item.VehicleWeight).ToString("N0"))</td>
+                    <td>@(((decimal)item.VehicleWeightMax).ToString("N0"))</td>
+                    <td>
+                    @{
+                        switch(item.TrangThai)
+                            {
+                                case "Còn hạn":
+                                    <span class="badge badge-success">Còn hạn</span>
+                                    break;
+                                case "Sắp hết hạn":
+                                    @:<span class="badge badge-warning">Sắp hết hạn</span>
+                                    break;
+                                case "Hết hạn":
+                                    @:<span class="badge badge-danger">Hết hạn</span>
+                                    break;
+                            
+                            }
+                    }
+                    </td>
+                    <td>
+                        <a class="cursor-pointer" onclick="_inspection.ShowAddOrUpdate(@item.Id)" title="Chỉnh sửa">
+                            <i class="icon-edit"></i>
+                        </a>
+                       
+                    </td>
+                </tr>
+                stt++;
+            }
+         
+        }
+        else
+        {
+            <tr>
+                <td colspan="4" class="text-center">
+                    <div class="search-null center mt40 mb40">
+                        <div class="mb24">
+                            <img src="/images/graphics/icon-search.png" alt="">
+                        </div>
+                        <h2 class="title txt_24">Không tìm thấy kết quả</h2>
+                        <div class="gray">Chúng tôi không tìm thấy thông tin mà bạn cần, vui lòng thử lại</div>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+

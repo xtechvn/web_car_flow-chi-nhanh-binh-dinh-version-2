@@ -1,0 +1,288 @@
+@using Entities.ViewModels.Car;
+@using Entities.Models;
+@{
+    Layout = null;
+    var AllCode = (List<AllCode>)ViewBag.AllCode;
+    var AllCode2 = (List<AllCode>)ViewBag.AllCode2;
+}
+@model List<CartoFactoryModel>
+<style>
+    .data-table td {
+        white-space: unset !important;
+    }
+
+    .icon-check {
+        cursor: pointer;
+        content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M15.9422 1.06754L5.94223 11.0675C5.88418 11.1256 5.81525 11.1717 5.73938 11.2032C5.66351 11.2347 5.58218 11.2508 5.50004 11.2508C5.41791 11.2508 5.33658 11.2347 5.2607 11.2032C5.18483 11.1717 5.1159 11.1256 5.05785 11.0675L0.682855 6.69254C0.565579 6.57526 0.499695 6.4162 0.499695 6.25035C0.499695 6.0845 0.565579 5.92544 0.682855 5.80816C0.80013 5.69088 0.95919 5.625 1.12504 5.625C1.29089 5.625 1.44995 5.69088 1.56723 5.80816L5.50004 9.74175L15.0579 0.18316C15.1751 0.0658843 15.3342 -1.2357e-09 15.5 0C15.6659 1.2357e-09 15.825 0.0658843 15.9422 0.18316C16.0595 0.300435 16.1254 0.459495 16.1254 0.625347C16.1254 0.7912 16.0595 0.95026 15.9422 1.06754Z" fill="%233A8245"/></svg>')
+    }
+
+    .icon-cancel {
+        cursor: pointer;
+        content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.41421 6L11.7071 1.70711C12.0976 1.31658 12.0976 0.683417 11.7071 0.292893C11.3166 -0.0976311 10.6834 -0.0976311 10.2929 0.292893L6 4.58579L1.70711 0.292893C1.31658 -0.0976311 0.683417 -0.0976311 0.292893 0.292893C-0.0976311 0.683417 -0.0976311 1.31658 0.292893 1.70711L4.58579 6L0.292893 10.2929C-0.0976311 10.6834 -0.0976311 11.3166 0.292893 11.7071C0.683417 12.0976 1.31658 12.0976 1.70711 11.7071L6 7.41421L10.2929 11.7071C10.6834 12.0976 11.3166 12.0976 11.7071 11.7071C12.0976 11.3166 12.0976 10.6834 11.7071 10.2929L7.41421 6Z" fill="%23FF0000"/></svg>');
+    }
+
+    .td-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px; /* khoảng cách giữa input và icon */
+    }
+
+        .td-inline .weight {
+            width: 80px;
+        }
+
+        .td-inline i {
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+    .data-table input {
+        width: 80% !important;
+    }
+    /* Ô chứa icon + text */
+.customer-rank {
+    vertical-align: middle;
+    text-align: left;
+}
+
+/* Icon chung */
+.rank-icon {
+    display: inline-block;
+    vertical-align: middle;
+    object-fit: contain;
+}
+
+/* Icon kim cương – cho TO ra */
+.rank-icon.diamond {
+    width: 34px;   /* 👈 tăng size */
+    height: 34px;
+    filter: drop-shadow(0 0 6px rgba(0, 170, 255, 0.7));
+}
+.rank-icon.gold {
+    width: 34px;   /* 👈 tăng size */
+    height: 34px;
+    filter: drop-shadow(0 0 6px rgba(0, 170, 255, 0.7));
+}
+.rank-icon.silver {
+    width: 34px;   /* 👈 tăng size */
+    height: 34px;
+    filter: drop-shadow(0 0 6px rgba(0, 170, 255, 0.7));
+}
+
+/* Text đi kèm */
+.rank-text {
+    font-weight: 600;
+    line-height: 1;  /* 👈 tránh lệch */
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 2px;
+}
+
+</style>
+@if (Model != null && Model.Count > 0)
+{
+    <table class="data-table" id="ListCarCall-@ViewBag.type">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th style="width:100px!important">Tên KH (Trại, đại lý)</th>
+                <th>Tên lái xe</th>
+                <th>Biển số xe</th>
+                <th>Giờ cân xong đầu vào</th>
+                <th>Trọng lượng thực tế (kg)</th>
+                <th>Máng xuất</th>
+                <th>Ghi chú</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody id="dataBody-@ViewBag.type">
+            @foreach (var item in Model)
+            {
+                if (item.ListTroughWeight != null && item.ListTroughWeight.Count > 0)
+                {
+                    foreach (var TroughWeight in item.ListTroughWeight)
+                    {
+                        <tr class="CartoFactory_@item.Id" data-queue="@item.RecordNumber" style="@(item.VehicleTroughStatus == 4 ?"background:antiquewhite;": "" )">
+
+                            <td>@item.RecordNumber</td>
+                            <td class="customer-rank">
+                                @switch (item.Rank) {
+                                    case 0:
+                                        <img src='~/images/icons/icon-bac.png' class='rank-icon silver' />
+                                        break;
+                                    case 1:
+                                        <img src='~/images/icons/icon-vang.png' class='rank-icon gold' />
+                                        break;
+                                    case 2:
+                                        <img src='~/images/icons/icon-kim-cuong.png' class='rank-icon diamond' />
+                                        break;
+                                }
+                                <span class="rank-text">@item.CustomerName</span>
+                            </td>
+                            <td>@item.DriverName</td>
+                            <td>
+                                <a class="btn-detail"
+                                   data-id="@item.Id" style="cursor:pointer">@item.VehicleNumber</a>
+                            </td>
+                            <td>
+                                @(item.VehicleWeighingTimeComeOut!=null?((DateTime)item.VehicleWeighingTimeComeOut).ToString("HH:mm dd/MM/yyyy"):"")
+                            </td>
+                            <td>@(item.VehicleLoadTaken >0?((decimal)item.VehicleLoadTaken).ToString("N0"):"")</td>
+                            <td>
+                                <div class="status-dropdown">
+                                    @if (TroughWeight.VehicleTroughWeight == null)
+                                    {
+                                        <button class="dropdown-toggle  @(ViewBag.type == 1 ? "disabled" : "") @(TroughWeight.VehicleTroughWeight==null ? "CartoFactory_"+item.Id+"_troughWeight" : "")"
+                                                data-type="1"
+                                                data-options='[
+                                                                            @foreach (var allcode in AllCode2)
+                                                                            {
+                                                                                @:{"text":"@allcode.Description","value":"@allcode.CodeValue"}@(allcode != AllCode2.Last() ? "," : "")
+                                                                            }
+                                                                ]'
+                                                @(ViewBag.type == 1 ? "disabled" : "")>
+                                            @item.TroughTypeName 
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <p style="font-size:13px!important">Máng @TroughWeight.TroughType</p>
+
+
+                                    }
+
+
+                                </div>
+                            </td>
+                            <td>
+                                @if (ViewBag.type == 0)
+                                {
+                                    <textarea class="Note" name="Note" value="@item.Note">@item.Note</textarea>
+                                }
+                                else
+                                {
+                                    <div style="display: flex; align-items: center">
+                                        <div style="white-space: pre-line;">
+                                            @item.Note
+                                        </div>
+                                    </div>
+                                }
+
+                            </td>
+                            <td>
+                                <div class="status-dropdown">
+                                    <button class="dropdown-toggle" data-options='[
+                            @foreach (var allcode in AllCode)
+                            {
+
+                                @:{"text":"@allcode.Description","value":"@allcode.CodeValue"}@(allcode != AllCode.Last() ? "," : "")
+
+                            }
+                                                        ]'>
+                                        @item.VehicleTroughStatusName
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+
+                }
+                else
+                {
+                
+                    <tr class="CartoFactory_@item.Id" data-queue="@item.RecordNumber" style="@(item.VehicleTroughStatus == 4 ?"background:antiquewhite;": "" )">
+
+                        <td>@item.RecordNumber</td>
+                        <td class="customer-rank">
+                            @switch (item.Rank) {
+                                case 0:
+                                    <img src='~/images/icons/icon-bac.png' class='rank-icon silver' />
+                                    break;
+                                case 1:
+                                    <img src='~/images/icons/icon-vang.png' class='rank-icon gold' />
+                                    break;
+                                case 2:
+                                    <img src='~/images/icons/icon-kim-cuong.png' class='rank-icon diamond' />
+                                    break;
+                            }
+                            <span class="rank-text">@item.CustomerName</span>
+                        </td>
+                        <td>@item.DriverName</td>
+                        <td>
+                            <a class="btn-detail"
+                            data-id="@item.Id" style="cursor:pointer">@item.VehicleNumber</a>
+                        </td>
+                        <td>
+                            @(item.VehicleWeighingTimeComeOut!=null?((DateTime)item.VehicleWeighingTimeComeOut).ToString("HH:mm dd/MM/yyyy"):"")
+                        </td>
+                        <td>@(item.VehicleLoadTaken >0?((decimal)item.VehicleLoadTaken).ToString("N0"):"")</td>
+                        <td>
+                            <div class="status-dropdown">
+                                <p style="font-size:13px!important">Chưa có</p>
+                            </div>
+                        </td>
+                        <td>
+                            @if (ViewBag.type == 0)
+                            {
+                                <textarea class="Note" name="Note" value="@item.Note">@item.Note</textarea>
+                            }
+                            else
+                            {
+                                <div style="display: flex; align-items: center">
+                                    <div style="white-space: pre-line;">
+                                        @item.Note
+                                    </div>
+                                        </div>
+                                    }
+
+                                </td>
+                                <td>
+                                    <div class="status-dropdown">
+                                        <button class="dropdown-toggle" data-options='[
+                                @foreach (var allcode in AllCode)
+                                {
+
+                                    @:{"text":"@allcode.Description","value":"@allcode.CodeValue"}@(allcode != AllCode.Last() ? "," : "")
+
+                                }
+                                                            ]'>
+                                            @item.VehicleTroughStatusName
+                                        </button>
+                                    </div>
+                            </td>
+                    </tr>
+                }
+            }
+                
+        </tbody>
+    </table>
+}
+else
+{
+    <table class="data-table" id="ListCarCall-@ViewBag.type">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên KH (Trại, đại lý)</th>
+                <th>Tên lái xe</th>
+                <th>Biển số xe</th>
+                <th>Giờ cân xong đầu vào</th>
+                <th>Trọng lượng thực tế (kg)</th>
+                <th>Máng xuất</th>
+                <th>Ghi chú</th>
+                <th>Trạng thái</th>
+            </tr>
+        </thead>
+        <tbody id="dataBody-@ViewBag.type">
+        </tbody>
+    </table>
+}
+
+
+<script>
+
+ // Gộp cột 0,1,2 nếu cột 0-4 giống nhau
+    _cartcalllist.autoRowspanWithCondition("ListCarCall-" +@ViewBag.type, [0, 1, 2, 3, 4,5,7, 8], [0, 1, 2, 3, 4,5]);
+</script>
+
+

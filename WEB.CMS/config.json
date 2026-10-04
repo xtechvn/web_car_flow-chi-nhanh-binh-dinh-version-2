@@ -1,0 +1,7 @@
+{
+  "EncryptApi": "r8AOZvfVZg",
+  "KEY_ENCODE_TOKEN_PUT_QUEUE": "AAFKCM7CoaBerVhcYCHQba1AyY13X41rT5s",
+  "STATIC_IMAGE_DOMAIN": "https://static-image.adavigo.com/images/upload",
+  "LoginURL": "https://localhost:44384/",
+  "LoginTokenExprire": 4000
+}

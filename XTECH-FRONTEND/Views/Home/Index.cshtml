@@ -1,0 +1,666 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Đăng Ký Xe</title>
+    <link rel="stylesheet" href="~/css/style_web_car_flow.css" />
+</head>
+<style>
+    .customer-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+
+        .customer-row input {
+            height: 34px;
+            padding: 4px 8px;
+        }
+
+    .code-input {
+        width: 30%;
+    }
+
+    .name-input {
+        width: 55%;
+    }
+
+    .btn-remove {
+        background: #ff4d4f;
+        color: #fff;
+        border: none;
+        padding: 0 10px;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+</style>
+<body>
+    <div class="container">
+        <!-- INPUT SECTION -->
+        <div class="input-section">
+            <div class="section-title">
+                <div class="input-icon">📝</div>
+                NHẬP THÔNG TIN
+            </div>
+
+            <form id="carRegistrationForm">
+                <input type="hidden" id="timedow" name="timedow" style="display:none">
+                <div class="form-group table_name">
+                    <label for="name">Tên khách hàng(Trại hoặc đại lý)<span style="color:red">*</span></label>
+                    <div id="customerRows">
+                        <!-- Row mặc định -->
+                        <div class="customer-row">
+                            <input type="text" name="code[]" class="code-input" placeholder="Nhập mã code" required>
+                            <input type="text" name="name[]" class="name-input" placeholder="Nhập tên khách hàng" required>
+
+                            <button type="button" class="btn-remove fa fa-trash-o" onclick="removeRow(this)" style="display:none">
+                                X
+                            </button>
+                        </div>
+                    </div>
+
+                    <a href="javascript:void(0)" onclick="addRow()" title="Thêm dòng">➕ </a>
+
+                </div>
+                <div class="form-group">
+                    <label for="plateNumber">Biển số xe đăng ký <span style="color:red">*</span></label>
+                    <input type="text" id="plateNumber" name="plateNumber"
+                           placeholder="VD: 30A-12345"
+                           required>
+                </div>
+                <div class="form-group">
+                    <label for="GPLX">Tên lái xe  <span style="color:red">*</span></label>
+                    <input type="text" id="GPLX" name="GPLX"
+                           placeholder="Nhập câu trả lời của bạn" required>
+                </div>
+                <div class="form-group" style="display:none">
+                    <label for="referee">Khối lượng hàng chuyên chở cho phép(CCD: 6500 Kg) <span style="color:red">*</span></label>
+                    <input type="text" id="referee" name="referee" value="0"
+                           placeholder="Nhập câu trả lời của bạn" required>
+                </div>
+                <div class="form-group">
+                    <label for="phoneNumber">Số điện thoại tài xế <span style="color:red">*</span></label>
+                    <input type="tel" id="phoneNumber" name="phoneNumber"
+                           placeholder="VD: 0987654321"
+                           pattern="[0-9]{10,11}"
+                           required>
+                </div>
+                <div class="form-group">
+                    <label for="phoneNumber">Ghi chú </label>
+                    <input type="text" id="Camp" name="Camp"
+                           placeholder="Nhập câu trả lời của bạn">
+                </div>
+                <div id="current-time" style="font-weight:bold; color:#333; margin-top:10px;">
+                </div>
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    GỬI ĐĂNG KÝ
+                </button>
+            </form>
+
+            <div id="timerSection" class="timer" style="display: none; margin-top: 20px;">
+                <div class="timer-text">Bạn cần đợi trước khi gửi lại:</div>
+                <div class="timer-countdown" id="countdown">14:59</div>
+            </div>
+        </div>
+
+        <!-- OUTPUT SECTION -->
+        <div class="output-section">
+            <div class="section-title">
+                <div class="output-icon">📊</div>
+                KẾT QUẢ ĐĂNG KÝ
+            </div>
+
+            <div id="statusMessage" class="status-message status-waiting">
+                ⏳ Vui lòng nhập thông tin và bấm "Gửi đăng ký"
+            </div>
+
+            <div class="output-box">
+                <h3 style="margin-bottom: 15px; color: #333;">Số thứ tự của bạn:</h3>
+                <div class="queue-number" id="queueNumber">---</div>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">Biển số xe</div>
+                    <div class="info-value" id="outputPlate">---</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Số điện thoại</div>
+                    <div class="info-value" id="outputPhone">---</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Ngày đăng ký</div>
+                    <div class="info-value" id="outputDate">---</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Thời gian</div>
+                    <div class="info-value" id="outputTime">---</div>
+                </div>
+            </div>
+            <div class="">
+                <h5 style="margin-bottom: 15px; color: #333;">Quét Qr code để nhận tin nhắn Zalo</h5>
+                <img src="~/images/graphics/qrcode.jpg" />
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript" src="~/libs/jquery/jquery-3.6.0.min.js"></script>
+    <script>
+        // API Configuration
+        const API_BASE_URL = 'https://cargillbinhdinh.com/api'; // Change to your API URL
+        const ENDPOINTS = {
+            REGISTER: '/carregistration/registerV2',
+            QUEUE_STATUS: '/carregistration/queue-status',
+            CHECK_ZALO: '/carregistration/check-zalo-user',
+
+        };
+
+        // Global variables
+        let countdownTimer = null;
+        let isSubmitting = false;
+
+        // Utility functions
+        function showLoading(show = true) {
+            const submitBtn = document.getElementById('submitBtn');
+            const statusMessage = document.getElementById('statusMessage');
+
+            if (show) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '🔄 Đang xử lý...';
+                statusMessage.className = 'status-message status-waiting';
+                statusMessage.innerHTML = '⏳ Đang gửi yêu cầu đăng ký...';
+                isSubmitting = true;
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'GỬI ĐĂNG KÝ';
+                isSubmitting = false;
+            }
+        }
+
+        function showError(message) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.className = 'status-message status-error';
+            statusMessage.innerHTML = `❌ ${message}`;
+        }
+
+        function showSuccess(message) {
+            const statusMessage = document.getElementById('statusMessage');
+            statusMessage.className = 'status-message status-success';
+            statusMessage.innerHTML = `✅ ${message}`;
+        }
+
+        function formatTime(minutes) {
+            const mins = Math.floor(minutes);
+            const secs = Math.floor((minutes - mins) * 60);
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // API Functions
+        async function makeAPICall(endpoint, method = 'GET', data = null) {
+            try {
+                const config = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                };
+
+                if (data && method !== 'GET') {
+                    config.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API Call Error:', error);
+                throw error;
+            }
+        }
+        async function CallAPI(endpoint, method = 'GET', data = null) {
+            try {
+                const config = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                };
+
+                if (data && method !== 'GET') {
+                    config.body = JSON.stringify(data);
+                }
+
+                const response = await fetch(`${API_URL}${endpoint}`, config);
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('API Call Error:', error);
+                throw error;
+            }
+        }
+
+        async function registerCar(plateNumber, phoneNumber, name, referee, GPLX, Camp, timedow) {
+            return await makeAPICall(ENDPOINTS.REGISTER, 'POST', {
+                plateNumber: plateNumber,
+                phoneNumber: phoneNumber,
+                Name: name,
+                Referee: referee,
+                GPLX: GPLX,
+                Camp: Camp,
+                Timedow: timedow
+            });
+        }
+        //async function registerCar_Insert(plateNumber, phoneNumber, name, referee, GPLX, Camp, QueueNumber, RegistrationTime) {
+        //    return await makeAPICall(ENDPOINTS.Insert, 'POST', {
+        //        plateNumber: plateNumber,
+        //        phoneNumber: phoneNumber,
+        //        Name: name,
+        //        Referee: referee,
+        //        GPLX: GPLX,
+        //        Camp: Camp,
+        //        QueueNumber: QueueNumber,
+        //        RegistrationTime: RegistrationTime
+        //    });
+        //}
+
+        async function getQueueStatus() {
+            //return await makeAPICall(ENDPOINTS.QUEUE_STATUS);
+        }
+
+        // UI Update Functions
+        function updateOutput(data) {
+            // Update queue number
+            document.getElementById('queueNumber').textContent =
+                data.queueNumber ? data.queueNumber.toString().padStart(3, '0') : '---';
+
+            // Update registration details
+            document.getElementById('outputPlate').textContent = data.plateNumber || '---';
+            document.getElementById('outputPhone').textContent = data.phoneNumber || '---';
+
+            if (data.registrationTime) {
+                const regTime = new Date(data.registrationTime);
+                document.getElementById('outputDate').textContent = regTime.toLocaleDateString('vi-VN');
+                document.getElementById('outputTime').textContent = regTime.toLocaleTimeString('vi-VN');
+            } else {
+                document.getElementById('outputDate').textContent = '---';
+                document.getElementById('outputTime').textContent = '---';
+            }
+
+            //const plateNumber = document.getElementById('plateNumber').value.trim();
+            //const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            //const referee = document.getElementById('referee').value.trim();
+            //const GPLX = document.getElementById('GPLX').value.trim();
+            //const name = document.getElementById('name').value.trim();
+            //const Camp = document.getElementById('Camp').value.trim();
+            //registerCar_Insert(plateNumber, phoneNumber, name, referee, GPLX, Camp, data.queueNumber, data.registrationTime);
+        }
+
+        function startCountdown(remainingMinutes) {
+            const timerSection = document.getElementById('timerSection');
+            const countdown = document.getElementById('countdown');
+            const submitBtn = document.getElementById('submitBtn');
+
+            timerSection.style.display = 'block';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'VUI LÒNG ĐỢI...';
+
+            let remaining = remainingMinutes;
+
+            const updateCountdown = () => {
+                if (remaining <= 0) {
+                    clearInterval(countdownTimer);
+                    timerSection.style.display = 'none';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'GỬI ĐĂNG KÝ';
+                    return;
+                }
+
+                countdown.textContent = formatTime(remaining);
+                remaining -= 1 / 60; // Decrease by 1 second (1/60 minute)
+            };
+
+            updateCountdown(); // Initial call
+            countdownTimer = setInterval(updateCountdown, 1000);
+        }
+
+        function clearCountdown() {
+            if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+            }
+            document.getElementById('timerSection').style.display = 'none';
+        }
+
+        // Event Handlers
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            if (isSubmitting) return;
+            isSubmitting = true; // khóa ngay từ đầu
+            showLoading(true);
+            const rows = document.querySelectorAll('.customer-row');
+            var name = '';
+
+            rows.forEach((row, index) => {
+                const code = row.querySelector('.code-input').value.trim();
+                const customerName = row.querySelector('.name-input').value.trim();
+
+                if (code && customerName) {
+                    name += customerName + ' - ' + code;
+                    if (index < rows.length - 1) {
+                        name += '\r\n'; // phân cách nhiều dòng
+                    }
+                }
+            });
+            name = name.trim();
+            const plateNumber = document.getElementById('plateNumber').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const referee = document.getElementById('referee').value.trim();
+            const GPLX = document.getElementById('GPLX').value.trim();
+            const Camp = document.getElementById('Camp').value.trim();
+            const timedow = $('#timedow').val();
+
+            // Basic validation
+            if (!plateNumber || !phoneNumber || !referee || !GPLX || !name) {
+                showError('Vui lòng nhập đầy đủ thông tin!');
+                return;
+            }
+
+            try {
+
+
+                showLoading(true);
+
+                // Kiểm tra khoảng 17:55 đến 18:00
+               const now = new Date();
+            console.log('Current time:', now.getHours(), now.getMinutes());
+
+            // Lấy datetime từ ViewBag.Data
+            const targetString = "@ViewBag.Data";   // ví dụ "02/12/2025 08:00:00"
+            const parts = targetString.split(/[/ :]/);  // [dd, MM, yyyy, HH, mm, ss]
+
+            // Lấy ngày hiện tại
+            const today = new Date();
+            // Tạo targetDate = hôm nay + giờ từ ViewBag.Data
+            const targetDate = new Date(
+                today.getFullYear(),     // yyyy hiện tại
+                today.getMonth(),        // MM hiện tại
+                today.getDate(),         // dd hiện tại
+                parts[3],                // HH từ ViewBag.Data
+                parts[4],                // mm từ ViewBag.Data
+                parts[5]                 // ss từ ViewBag.Data
+            )
+            // Trừ 5 phút
+            const checkTime = new Date(targetDate.getTime() - 5 * 60 * 1000);
+
+                // So sánh giờ + phút
+            const nowHM = now.getHours() * 60 + now.getMinutes();
+                const targetHM = checkTime.getHours() * 60 + checkTime.getMinutes();
+
+                // if (now.getHours() == checkTime.getHours() && nowHM <= targetHM) {
+                //     setTimeout(() => {
+                //         startCountdown17_18();
+                //     }, 1000);
+
+                //     return;
+                // }
+                // Call API to register car
+                const response = await registerCar(plateNumber, phoneNumber, name, referee, GPLX, Camp, timedow);
+
+
+                if (response.success) {
+                    showSuccess(response.message);
+                    updateOutput(response);
+
+                    // Start countdown for next submission (15 minutes)
+                    setTimeout(() => {
+                        startCountdown(15);
+                    }, 1000);
+                } else {
+                    showError(response.message);
+
+                    // If there's remaining time, start countdown
+                    if (response.remainingTimeMinutes) {
+                        startCountdown(response.remainingTimeMinutes);
+                    }
+                }
+
+            } catch (error) {
+                console.error('Registration error:', error);
+
+                // Parse specific error messages
+                let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại sau!';
+
+                if (error.message.includes('15 phút') || error.message.includes('đợi')) {
+                    errorMessage = error.message;
+                    // Try to extract remaining time and start countdown
+                    const match = error.message.match(/(\d+)\s*phút/);
+                    if (match) {
+                        const remainingMinutes = parseInt(match[1]);
+                        startCountdown(remainingMinutes);
+                    }
+                } else if (error.message.includes('không đúng định dạng')) {
+                    errorMessage = error.message;
+                } else if (error.message.includes('Rate limit')) {
+                    errorMessage = 'Bạn đang gửi quá nhanh, vui lòng đợi 15 phút!';
+                    startCountdown(15);
+                }
+
+                showError(errorMessage);
+            } finally {
+                if (!countdownTimer) {
+                    showLoading(false);
+                    isSubmitting = false;
+                }
+            }
+        }
+
+
+        // Initialize app
+        async function initializeApp() {
+            try {
+                // Load current queue status
+                const queueStatus = await getQueueStatus();
+                document.getElementById('queueNumber').textContent =
+                    queueStatus.nextQueueNumber ? queueStatus.nextQueueNumber.toString().padStart(3, '0') : '001';
+
+                console.log('App initialized successfully');
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                // Set default values if API is not available
+                document.getElementById('queueNumber').textContent = '---';
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function () {
+            // Initialize app
+            initializeApp();
+
+            // Form submission
+            document.getElementById('carRegistrationForm').addEventListener('submit', handleFormSubmit);
+
+            // Phone number blur event
+            //document.getElementById('phoneNumber').addEventListener('blur', handlePhoneBlur);
+
+            // Format input as user types
+            document.getElementById('plateNumber').addEventListener('input', function () {
+                  let value = this.value
+                        .toUpperCase()                 // chuyển IN HOA
+                        .replace(/[^0-9A-Z\/]/g, '');  // chỉ giữ chữ, số, /
+
+                    // Xóa dấu / thừa (//// → /)
+                    value = value.replace(/\/+/g, '/');
+
+                    this.value = value;
+            });
+
+            document.getElementById('phoneNumber').addEventListener('input', function () {
+                // Only allow numbers
+                this.value = this.value.replace(/[^0-9]/g, '');
+            });
+        });
+
+        // Handle page visibility change to refresh countdown
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden && countdownTimer) {
+                // Page became visible, refresh countdown status
+                const phoneNumber = document.getElementById('phoneNumber').value.trim();
+                if (phoneNumber) {
+                    checkTimeRestriction(phoneNumber).then(restriction => {
+                        if (!restriction.canSubmit && restriction.remainingMinutes > 0) {
+                            clearCountdown();
+                            startCountdown(restriction.remainingMinutes);
+                        } else {
+                            clearCountdown();
+                        }
+                    }).catch(console.error);
+                }
+            }
+        });
+        function startCountdown17_18() {
+            const timerSection = document.getElementById('timerSection');
+            const countdown = document.getElementById('countdown');
+            const submitBtn = document.getElementById('submitBtn');
+
+            timerSection.style.display = 'block';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'VUI LÒNG ĐỢI...';
+
+            // --- Lấy giờ từ ViewBag.Data ---
+            // viewBagTime dạng: "02/12/2025 08:00:00"
+            const viewBagTime = "@ViewBag.Data";
+            const parts = viewBagTime.split(/[/ :]/);  // [dd, MM, yyyy, HH, mm, ss]
+
+            const today = new Date();
+
+            // target = hôm nay + giờ của ViewBag.Data
+            const target = new Date(
+                today.getFullYear(),
+                today.getMonth(),
+                today.getDate(),
+                parts[3],   // HH
+                parts[4],   // mm
+                parts[5]    // ss
+            );
+
+            const now = new Date();
+            let remaining = Math.floor((target - now) / 1000);
+
+            const updateCountdown = () => {
+                if (remaining <= 0) {
+                    clearInterval(countdownTimer);
+                    timerSection.style.display = 'none';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'GỬI ĐĂNG KÝ';
+                    return;
+                }
+
+                countdown.textContent = formatTime2(remaining);
+                remaining -= 1;
+            };
+
+            updateCountdown();
+            countdownTimer = setInterval(updateCountdown, 1000);
+        }
+        function formatTime2(diff) {
+            const mins = Math.floor(diff / 60);
+            const secs = diff % 60;
+            console.log(diff)
+            console.log(mins)
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        $(document).ready(function () {
+            const now = new Date();
+            console.log('Current time:', now.getHours(), now.getMinutes());
+
+            // Lấy datetime từ ViewBag.Data
+            const targetString = "@ViewBag.Data";   // ví dụ "02/12/2025 08:00:00"
+            const parts = targetString.split(/[/ :]/);  // [dd, MM, yyyy, HH, mm, ss]
+
+            // Lấy ngày hiện tại
+            const today = new Date();
+            // Tạo targetDate = hôm nay + giờ từ ViewBag.Data
+            const targetDate = new Date(
+                today.getFullYear(),     // yyyy hiện tại
+                today.getMonth(),        // MM hiện tại
+                today.getDate(),         // dd hiện tại
+                parts[3],                // HH từ ViewBag.Data
+                parts[4],                // mm từ ViewBag.Data
+                parts[5]                 // ss từ ViewBag.Data
+            )
+
+            $('#timedow').val(targetString);
+
+            // Trừ 5 phút
+            const checkTime = new Date(targetDate.getTime() - 5 * 60 * 1000);
+
+            console.log("CheckTime:", checkTime);
+            // Kiểm tra điều kiện
+            if (now >= checkTime) {
+                setTimeout(() => {
+                    startCountdown17_18();
+                }, 1000);
+
+                return;
+            }
+        });
+
+
+
+    </script>
+    <script>
+        function addRow() {
+            const container = document.getElementById('customerRows');
+
+            const row = document.createElement('div');
+            row.className = 'customer-row';
+
+            row.innerHTML = `
+                <input type="text" name="code[]" class="code-input" placeholder="Nhập mã code" required>
+                <input type="text" name="name[]" class="name-input" placeholder="Nhập tên khách hàng" required>
+                <button type="button" class="btn-remove fa fa-trash-o" onclick="removeRow(this)">X</button>
+            `;
+
+            container.appendChild(row);
+
+            updateRemoveButtons();
+        }
+
+        function removeRow(btn) {
+            const row = btn.closest('.customer-row');
+            row.remove();
+
+            updateRemoveButtons();
+        }
+
+        function updateRemoveButtons() {
+            const rows = document.querySelectorAll('.customer-row');
+
+            rows.forEach((row, index) => {
+                const removeBtn = row.querySelector('.btn-remove');
+                // Ẩn nút xóa nếu chỉ còn 1 dòng
+                removeBtn.style.display = rows.length === 1 ? 'none' : 'inline-block';
+            });
+        }
+    </script>
+
+</body>
+</html>

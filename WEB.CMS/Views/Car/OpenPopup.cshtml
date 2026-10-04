@@ -1,0 +1,39 @@
+﻿@using Entities.Models
+@using Entities.ViewModels;
+@{
+    var Status = (List<AllCode>)ViewBag.Status;
+    var StatusCar = ViewBag.StatusCar;
+}
+<input style="display:none;" id="idCar" value="@ViewBag.id" />
+<div class="container">
+    <div class="">
+        <div class="grid  gap10 mb20">
+            <div class="grid-item border">
+                <form id="CustomerManager_Detail_Status" onsubmit="return false">
+                    <div class="col-md-6 mb10"><label class="lbl mt5 mb0">Trạng thái </label></div>
+                    <div class="col-md-12 mb10">
+                        <select class="select2 form-control" name="" id="Client_Status" style="width: 100%;">
+                            @foreach (var item2 in Status)
+                            {
+                                if (item2.CodeValue == StatusCar)
+                                {
+                                    <option value="@item2.CodeValue" selected>@item2.Description</option>
+                                }
+                                else
+                                {
+                                    <option value="@item2.CodeValue">@item2.Description</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="text-center" style="margin-top: 20px; margin-bottom: 20px;">
+    <button type="submit" class="btn btn-default btn btn-default cancel" onclick="$.magnificPopup.close();">Bỏ qua</button>
+    <button type="submit" class="btn btn-default" onclick="" style="background: #5cb566 !important;">Đồng ý</button>
+</div>
+

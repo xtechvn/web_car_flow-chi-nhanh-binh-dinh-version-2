@@ -1,0 +1,335 @@
+﻿<!DOCTYPE html>
+<html lang="vi" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="" />
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <title> @ViewData["Title"] </title>
+    <link type="image/x-icon" href="~/images/graphics/logo.svg" rel="shortcut icon" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/theme.css?v=2">
+    <link href="~/lib/toastr/toastr.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.5/signalr.min.js"></script>
+
+
+    <link href="~/lib/sweetalert2/sweetalert2.css" rel="stylesheet" />
+    <style>
+        /* chỉ áp dụng cho dropdown của nút cài đặt */
+        .settings-dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .settings-btn {
+            background: #fff;
+            border: 1px solid #ccc;
+            padding: 6px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease;
+        }
+
+            .settings-btn:hover {
+                background: #f5f5f5;
+            }
+
+        .settings-menu {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            list-style: none;
+            padding: 6px 0;
+            margin: 6px 0 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            display: none;
+            min-width: 200px;
+            z-index: 9999;
+        }
+
+        .settings-dropdown.open .settings-menu {
+            display: block;
+        }
+
+        .settings-menu li {
+            padding: 0;
+        }
+
+        .settings-menu a {
+            display: flex; /* cho icon và text trên cùng 1 dòng */
+            align-items: center;
+            gap: 8px; /* khoảng cách giữa icon và text */
+            white-space: nowrap; /* 🔥 không cho chữ xuống dòng */
+            padding: 8px 16px;
+            color: #333;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+
+            .settings-menu a:hover {
+                background: #f0f0f0;
+            }
+
+        .menu-change-pass {
+            color: #333 !important;
+        }
+
+            .menu-change-pass:hover {
+                color: #000 !important;
+                background: #f0f0f0;
+            }
+    </style>
+    <!-- build:head -->
+</head>
+
+<body class="homepage">
+    <style>
+        .data-table {
+            font-size: 11px !important;
+        }
+    </style>
+    <section class="section-main clearfix">
+        <!--await Component.InvokeAsync("Menu")-->
+        <!--HEADER-->
+        <header class="header">
+
+            @await Component.InvokeAsync("TopBar")
+        </header>
+        <!--END HEADER-->
+        @RenderBody()
+
+
+    </section>
+    <footer class="footer">
+        <p>
+            Chi nhánh Công Ty TNHH Cargill Việt Nam tại Bình Định<br>
+            Mã số thuế: 3600233178-012
+            <br>
+            Địa chỉ: Lô BI-6, Đường Trung Tâm, Khu công nghiệp Long Mỹ, phường Quy Nhơn Tây, Tỉnh Gia Lai, Việt Nam
+        </p>
+    </footer>
+    <div id="magnific-popup-small" class="white-popup mfp-hide">
+        <div class="content_lightbox">
+            <div class="head magnific-title"></div>
+            <div class="form-default magnific-body"></div>
+        </div>
+        <button title="Close (Esc)" type="button" class="mfp-close">×</button>
+    </div>
+    <div id="popup" class="popup-form  white-popup mfp-hide">
+        <div class="round_lighbox">
+            <div class="title-popup">Lịch sử cập nhật trạng thái</div>
+            <div class="content_lightbox">
+                <table class="detail-table">
+                    <tbody>
+                        <tr>
+                            <td class="label">Tên khách hàng (trại, đại lý)</td>
+                            <td class="value">Chị em Rọt</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Tên lái xe</td>
+                            <td class="value">Nguyễn Văn Cường</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Biển số xe</td>
+                            <td class="value">29L1 - 8866</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Giờ cân xong đầu vào</td>
+                            <td class="value highlight">17:07 06/08/2025</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Giờ gọi vào máng xuất</td>
+                            <td class="value highlight">17:07 06/08/2025</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Giờ vào máng</td>
+                            <td class="value highlight">17:07 06/08/2025</td>
+                        </tr>
+                        <tr>
+                            <td class="label">Giờ hoàn thành</td>
+                            <td class="value highlight">17:07 06/08/2025</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            </div>
+
+        </div>
+    </div>
+    <div id="magnific-popup-large" class="user-popup popup-width2 white-popup mfp-hide">
+        <div class="content_lightbox">
+            @* <div class="head magnific-title"></div> *@
+            <div class=" magnific-body"></div>
+        </div>
+        <button title="Close (Esc)" type="button" class="mfp-close">×</button>
+    </div>
+
+
+    <!--end popup-->
+    <!--Jquery lib-->
+    <script src="~/js/jquery-2.1.4.min.js"></script>
+
+    <script src="~/lib/jquery.validate.js"></script>
+    <script src="~/lib/jquery-ui-1.12.1/jquery-ui.min.js"></script>
+    @* <script src="~/js/jquery.magnific-popup.min.js"></script> *@
+    <script type="text/javascript" src="~/lib/magnific-popup/jquery.magnific-popup.js"></script>
+    <script type="text/javascript" src="~/lib/sweetalert2/sweetalert2.js"></script>
+    <script src="~/js/simple-scrollbar.min.js"></script>
+
+    <script src="~/js/common.js"></script>
+    <script type="text/javascript" src="~/lib/cms-common.js"></script>
+    <script type="text/javascript" src="~/modules/common.js"></script>
+    <script type="text/javascript" src="~/lib/toastr/toastr.min.js"></script>
+
+
+    <!-- Bootstrap JS (kèm Popper) -->
+    @* <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script> *@
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Chỉ bắt các dropdown kiểu "settings"
+            const dropdowns = document.querySelectorAll(".settings-dropdown");
+            if (!dropdowns.length) return;
+
+            // Đóng tất cả dropdown đang mở (dùng khi mở cái khác / click ra ngoài)
+            function closeAll(except) {
+                document.querySelectorAll(".settings-dropdown.open").forEach(d => {
+                    if (d !== except) {
+                        d.classList.remove("open");
+                        const b = d.querySelector(".settings-btn");
+                        if (b) b.setAttribute("aria-expanded", "false");
+                    }
+                });
+            }
+
+            dropdowns.forEach(wrap => {
+                const button = wrap.querySelector(".settings-btn");
+                const menu = wrap.querySelector(".settings-menu");
+                if (!button || !menu) return;
+
+                // Toggle khi bấm nút
+                button.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const willOpen = !wrap.classList.contains("open");
+                    closeAll(wrap);
+                    wrap.classList.toggle("open", willOpen);
+                    button.setAttribute("aria-expanded", willOpen ? "true" : "false");
+                });
+
+                // Click bên trong menu không đóng
+                // menu.addEventListener("click", function (e) {
+                //   e.stopPropagation();
+                // });
+            });
+
+            // Click ra ngoài: đóng
+            document.addEventListener("click", function () {
+                closeAll();
+            });
+
+            // Nhấn Esc: đóng
+            window.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") closeAll();
+            });
+        });
+    </script>
+    <script>
+        $(document).on('click', '.btn-logout', function (e) {
+
+            e.preventDefault();
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = '/Account/Login';
+        });
+    </script>
+
+
+
+
+
+    <script>
+        $(function () {
+            $('.table-wrapper').each(function () {
+                SimpleScrollbar.initEl(this);
+            });
+        });
+
+
+        // js dropdown
+
+
+    </script>
+    <script>
+        $('.open-popup-link').magnificPopup({
+            type: 'inline',
+            midClick: true, // Allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source in href.
+            mainClass: 'mfp-with-zoom',
+            fixedContentPos: false,
+            fixedBgPos: true,
+            overflowY: 'auto',
+            closeBtnInside: true,
+            preloader: false,
+            removalDelay: 300,
+        });
+        $(document).on("click", ".btn-detail", function () {
+
+            var id = $(this).data("id");
+
+            $.ajax({
+                url: "/Car/Detail",
+                type: "GET",
+                data: { id: id },
+                success: function (result) {
+
+                    // nhét partial view vào popup
+                    $("#popup").html(result);
+
+                    // mở popup
+                    $.magnificPopup.open({
+                        items: {
+                            src: '#popup',
+                            type: 'inline'
+                        },
+                        mainClass: 'mfp-with-zoom',
+                        closeBtnInside: true,
+                        fixedContentPos: true
+                    });
+                },
+                error: function (xhr, status, error) {
+                    alert("Có lỗi khi tải dữ liệu: " + error);
+                }
+            });
+        });
+    </script>
+
+    <div class="clearfix"></div>
+
+    <script>
+        $('.open-popup-link').magnificPopup({
+            type: 'inline',
+            midClick: true, // Allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source in href.
+            mainClass: 'mfp-with-zoom',
+            fixedContentPos: false,
+            fixedBgPos: true,
+            overflowY: 'auto',
+            closeBtnInside: true,
+            preloader: false,
+            removalDelay: 300,
+        });
+    </script>
+
+    <!-- build:script -->
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

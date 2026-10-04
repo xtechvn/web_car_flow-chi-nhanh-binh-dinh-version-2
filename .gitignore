@@ -1,0 +1,30 @@
+﻿###############################################################
+# Visual Studio / IDE Files (Bỏ qua các file cấu hình cục bộ)
+###############################################################
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+DAL/bin/
+DAL/obj/
+Entities/bin/
+Entities/obj/
+Repositories/bin/
+Repositories/obj/
+Utilities/bin/
+Utilities/obj/
+Web.CMS/bin/
+Web.CMS/obj/
+Web.Cargill.Api/bin/
+Web.Cargill.Api/obj/
+.vs
+App_Push_Consummer/bin/
+App_Push_Consummer/obj/
+XTECH-FRONTEND/bin/
+XTECH-FRONTEND/obj/
+# Ignore appsettings.json files
+WEB.CMS/appsettings.json
+Web.Cargill.Api/appsettings.json
+XTECH-FRONTEND/appsettings.json

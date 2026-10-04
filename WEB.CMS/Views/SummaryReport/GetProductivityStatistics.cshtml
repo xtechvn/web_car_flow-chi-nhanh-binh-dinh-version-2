@@ -1,0 +1,69 @@
+﻿@using Entities.ViewModels.Car;
+@using Entities.Models;
+@model TotalVehicleInspection
+@if (Model != null)
+{
+    <tbody>
+        <tr>
+            <td>Thời điểm kết thúc xuất hàng</td>
+            <td>@Model.MaxVehicleTimeOutToday.ToString("HH:mm:ss")</td>
+        </tr>
+        <tr>
+            <td>Số lượng chuyến đã xuất</td>
+            <td>@Model.TotalCarCompleted chuyến</td>
+        </tr>
+        <tr>
+            <td>Khối lượng đã xuất</td>
+            <td>@(Model.TotalWeightTroughType > 0 ? Model.TotalWeightTroughType.ToString("N2") : "0") tấn</td>
+        </tr>
+        <tr>
+            <td>Số giờ làm việc</td>
+            <td>@Model.TotalTimeWorkInHour giờ</td>
+        </tr>
+        <tr>
+            <td>Năng suất trung bình</td>
+            <td>@Math.Round(Model.AverageProductivity, 2) (tấn/h)</td>
+        </tr>
+        <tr>
+            <td>Thời gian loading trung bình/tấn</td>
+            <td>@(Model.TotalTimeWorkInHour > 0 && Model.TotalWeightTroughType > 0 ? (Math.Round((double)(Model.TotalTimeWorkInHour * 60) / Model.TotalWeightTroughType, 2)).ToString("N2") : "0")  (ph/tấn)</td>
+        </tr>
+        <tr>
+            <td>Thời gian loading trung bình/chuyến</td>
+            <td>@(Model.TotalTimeWorkInHour > 0 & Model.TotalCarCompleted > 0 ? (Math.Round((double)(Model.TotalTimeWorkInHour * 60) / Model.TotalCarCompleted, 2)).ToString("N2") : "0")  (ph/chuyến)</td>
+        </tr>
+    </tbody>
+}
+else
+{
+    <tbody>
+        <tr>
+            <td>Thời điểm kết thúc xuất hàng</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>Số lượng chuyến đã xuất</td>
+            <td>0 chuyến</td>
+        </tr>
+        <tr>
+            <td>Khối lượng đã xuất</td>
+            <td>0 tấn</td>
+        </tr>
+        <tr>
+            <td>Số giờ làm việc</td>
+            <td>0 giờ</td>
+        </tr>
+        <tr>
+            <td>Năng suất trung bình</td>
+            <td>0 (tấn/h)</td>
+        </tr>
+        <tr>
+            <td>Thời gian loading trung bình/tấn</td>
+            <td>0 (ph/tấn)</td>
+        </tr>
+        <tr>
+            <td>Thời gian loading trung bình/chuyến</td>
+            <td>0 (ph/chuyến)</td>
+        </tr>
+    </tbody>
+}

@@ -1,0 +1,51 @@
+﻿@{
+    ViewData["Title"] = "Quản Nhóm quyền";
+}
+<head>
+    <link href="~/lib/magnific-popup/magnific-popup.css" rel="stylesheet" />
+</head>
+<main class="main-section">
+
+
+    <div class="table-head">
+        <a href="/" class="btn-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#344054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+        </a>
+        <h2 class="table-title">Danh sách nhóm quyền</h2>
+        <div class="table-search">
+            <input type="text" class="input_search onclick-togle" id="ip-kup-search-role" placeholder="Tìm kiếm" />
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M13.3538 12.6464L10.2244 9.51764C11.1314 8.42871 11.5837 7.03201 11.4872 5.6181C11.3906 4.20419 10.7527 2.88193 9.70609 1.92637C8.65949 0.970822 7.28478 0.455551 5.86795 0.487751C4.45111 0.519951 3.10123 1.09714 2.09912 2.09926C1.09701 3.10137 0.519814 4.45125 0.487614 5.86808C0.455414 7.28492 0.970685 8.65963 1.92624 9.70623C2.88179 10.7528 4.20405 11.3908 5.61796 11.4873C7.03187 11.5838 8.42857 11.1315 9.51751 10.2245L12.6463 13.3539C12.6927 13.4003 12.7479 13.4372 12.8086 13.4623C12.8693 13.4875 12.9343 13.5004 13 13.5004C13.0657 13.5004 13.1308 13.4875 13.1915 13.4623C13.2522 13.4372 13.3073 13.4003 13.3538 13.3539C13.4002 13.3074 13.4371 13.2523 13.4622 13.1916C13.4873 13.1309 13.5003 13.0658 13.5003 13.0001C13.5003 12.9344 13.4873 12.8694 13.4622 12.8087C13.4371 12.748 13.4002 12.6928 13.3538 12.6464ZM1.50001 6.00014C1.50001 5.11013 1.76393 4.2401 2.25839 3.50008C2.75286 2.76006 3.45566 2.18328 4.27793 1.84268C5.1002 1.50209 6.005 1.41298 6.87791 1.58661C7.75083 1.76024 8.55265 2.18883 9.18199 2.81816C9.81132 3.4475 10.2399 4.24932 10.4135 5.12224C10.5872 5.99515 10.4981 6.89995 10.1575 7.72222C9.81687 8.54449 9.24009 9.24729 8.50007 9.74176C7.76005 10.2362 6.89002 10.5001 6.00001 10.5001C4.80694 10.4988 3.66311 10.0243 2.81949 9.18066C1.97586 8.33704 1.50133 7.19321 1.50001 6.00014Z" fill="#638C1C"></path>
+            </svg>
+            <button class="btn" onclick="_role.OnOpenCreateForm()"><span class="plus">✕</span> Thêm mới</button>
+        </div>
+    </div>
+
+    <div id="magnific-popup-small" class="popup-form  white-popup mfp-hide">
+        <div class="round_lighbox">
+            <div class="content_lightbox">
+                <div class="title-popup" id="Data_Tile"></div>
+                <div class="form-user-modern  magnific-body" id="Data_Body">
+                  
+                </div>
+
+            </div>
+            
+        </div>
+    </div>
+    <div class="table-wrapper simple-scrollbar ss-container" style="height: 310px;">
+        <div class="ss-wrapper">
+            <div class="ss-content">
+                <div id="grid-data"></div>
+            </div>
+        </div><div class="ss-scroll ss-hidden"></div>
+    </div>
+</main>
+
+
+@section scripts {
+    <script src="~/modules/role.js"></script>
+ 
+}

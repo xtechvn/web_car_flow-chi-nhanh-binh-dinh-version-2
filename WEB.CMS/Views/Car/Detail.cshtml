@@ -1,0 +1,55 @@
+﻿@model Entities.ViewModels.Car.CartoFactoryModel
+
+<div class="popup-form white-popup">
+    <div class="round_lighbox">
+        <div class="title-popup">Lịch sử cập nhật trạng thái</div>
+        <div class="content_lightbox">
+            <table class="detail-table">
+                <tbody>
+                    <tr>
+                        <td class="label">Tên khách hàng (trại, đại lý)</td>
+                        <td class="value">@Model.CustomerName</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Tên lái xe</td>
+                        <td class="value">@Model.DriverName</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Biển số xe</td>
+                        <td class="value">@Model.VehicleNumber</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Giờ cân xong đầu vào</td>
+                        <td class="value highlight">
+                            @(Model.VehicleWeighingTimeComeOut?.ToString("HH:mm dd/MM/yyyy"))
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Giờ gọi vào máng xuất</td>
+                        <td class="value highlight">
+                            @(Model.TimeCallVehicleTroughTimeComeIn?.ToString("HH:mm dd/MM/yyyy"))
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Giờ vào máng</td>
+                        <td class="value highlight">
+                            @(Model.VehicleTroughTimeComeIn?.ToString("HH:mm dd/MM/yyyy"))
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Giờ hoàn thành</td>
+                        <td class="value highlight">
+                            @(Model.VehicleTroughTimeComeOut?.ToString("HH:mm dd/MM/yyyy"))
+                        </td>
+                    </tr> 
+                    <tr>
+                        <td class="label">Lý do bỏ lượt</td>
+                        <td style="color:red">
+                            @(Model.Note)
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

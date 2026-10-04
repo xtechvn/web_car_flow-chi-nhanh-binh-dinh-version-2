@@ -1,0 +1,96 @@
+﻿@using Entities.ViewModels
+@using Entities.ViewModels.Car;
+@using Entities.Models;
+@{
+    Layout = null;
+    var AllCode = (List<AllCode>)ViewBag.AllCode;
+}
+@model List<UserGridModel>
+@if (Model != null && Model.Count > 0)
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên đăng nhập</th>
+                <th>Họ tên</th>
+                <th>Điện thoại</th>
+                <th>Ngày sinh</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+               @*  <th>Phòng ban</th>
+                <th>Chức vụ</th> *@
+         
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+            </tr>
+        </thead>
+        <tbody id="dataBody-@ViewBag.type">
+            @{
+                int counter = 0;
+            }
+            @foreach (var item in Model)
+            {
+                counter++;
+                <tr class="@((counter % 2 == 0)? "line-item bg-gray" : "line-item")" data-id="@item.Id" data-ajaxdetail="false">
+                    <td>@counter</td>
+                    <td>
+
+                        <a href="javascript:void(0);"
+                           onclick="_user.OnOpenEditForm('@item.Id')"
+                           class="link-edit">
+                            @item.UserName
+                        </a>
+                    </td>
+                    <td class="name_img">
+                        <div class="flex align-center">
+                            @*<div class="ava">
+                                <span class="thumb_img thumb_5x5">
+                                    <img src="@(item.Avata ?? string.Empty )" onerror="_imageError(this)" />
+                                </span>
+                            </div>*@
+                            <div class="content">
+                                @item.FullName
+                            </div>
+                        </div>
+                    </td>
+                    <td>@item.Phone</td>
+                    <td>@(item.BirthDay == null ? "N/A" : ((DateTime)item.BirthDay).ToString("dd/MM/yyyy"))</td>
+                    <td>@item.Email</td>
+                    <td>@item.UserRoleName </td>
+                 @*    <td>@item.UserDepartmentName </td>
+                    <td>@item.UserPositionName </td> *@
+
+                    <td>@(item.Status == 1 ? "Tạm ngừng" : "Đang hoạt động")</td>
+                    <td>@(item.CreatedOn == null ? "N/A" : ((DateTime)item.CreatedOn).ToString("dd/MM/yyyy"))</td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+
+}
+else
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên đăng nhập</th>
+                <th>Họ tên</th>
+                <th>Điện thoại</th>
+                <th>Ngày sinh</th>
+                <th>Email</th>
+                <th>Vai trò</th>
+               @*  <th>Phòng ban</th>
+                <th>Chức vụ</th>
+ *@
+                <th>Trạng thái</th>
+                <th>Ngày tạo</th>
+            </tr>
+        </thead>
+        <tbody id="dataBody">
+        </tbody>
+    </table>
+}
+

@@ -1,0 +1,71 @@
+﻿@using Entities.ViewModels
+@using Entities.ViewModels.Car;
+@using Entities.Models;
+@{
+    Layout = null;
+    var AllCode = (List<AllCode>)ViewBag.AllCode;
+}
+@model List<RoleDataModel>
+@if (Model != null && Model.Count > 0)
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên nhóm</th>
+                <th>Mô tả</th>
+                <th>Trạng thái</th>
+                <th>Số thành viên</th>
+                <th>Chức năng</th>
+            </tr>
+        </thead>
+        <tbody id="dataBody-@ViewBag.type">
+            @{
+                int counter = 0;
+            }
+            @foreach (var item in Model)
+            {
+                counter++;
+                <tr class="@((counter % 2 == 0)?"line-item bg-gray":"line-item")" data-id="@item.Id" data-ajaxdetail="false">
+                    <td>@counter</td>
+                    <td>
+                        <a href="javascript:void(0);"
+                           onclick="_role.OnOpenEditForm('@item.Id')"
+                           class="link-edit">
+                            @item.Name
+                        </a>
+                    </td>
+                    <td>@item.Description</td>
+                    <td>
+                        @(item.Status == 0 ? "Bình thường": "Khóa/tạm dừng")
+                    </td>
+                    <td class="count-user"><strong class="blue">@item.CountUser</strong></td> 
+                    <td>
+                        <a class="cursor-pointer" onclick="_role.OnOpenPQ('@item.Id')" title="Phân quyền">
+                            <i class="icon-edit"></i>
+                        </a>
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+
+}
+else
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Tên nhóm</th>
+                <th>Mô tả</th>
+                <th>Trạng thái</th>
+                <th>Số thành viên</th>
+            </tr>
+        </thead>
+        <tbody id="dataBody">
+        </tbody>
+    </table>
+}
+

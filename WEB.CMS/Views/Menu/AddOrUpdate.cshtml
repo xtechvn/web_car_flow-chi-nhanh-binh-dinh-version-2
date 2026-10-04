@@ -1,0 +1,73 @@
+﻿@{
+    Layout = null;
+}
+@using Entities.Models
+@using Entities.ViewModels
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@model MenuUpsertViewModel
+
+<form id="form_menu" onsubmit="return false">
+    <input type="hidden" asp-for="@Model.Id" />
+    <input type="hidden" asp-for="@Model.ParentId" />
+    <div class="form-grid">
+        <!-- Họ tên -->
+        <div class="form-group">
+            <label>Tên menu <span>*</span></label>
+            <input type="text" asp-for="@Model.Name" placeholder="Nhập tên menu">
+        </div>
+
+        <!-- Ngày sinh -->
+        <div class="form-group">
+            <label>Mã menu</label>
+            <input type="text" asp-for="@Model.MenuCode" />
+        </div>
+
+        <!-- Số điện thoại -->
+        <div class="form-group">
+            <label>Icon</label>
+            <input type="text" asp-for="@Model.Icon">
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+            <label>Tiêu Đề</label>
+            <input type="text" asp-for="@Model.Title">
+        </div>
+
+        <!-- Tên đăng nhập -->
+        <div class="form-group">
+            <label>Đường dẫn</label>
+            <input type="text" asp-for="@Model.Link">
+        </div>
+
+        <!-- Trạng thái -->
+        <div class="form-group">
+            <label>Trạng thái </label>
+            <select asp-for="@Model.Status" id="Status" name="Status">
+                @if (Model.Status == 0)
+                {
+                    <option value="0" selected> Hoạt động</option>
+                }
+                else
+                {
+                    <option value="0"> Hoạt động</option>
+                }
+                @if (Model.Status == 1)
+                {
+                    <option value="1" selected>Tạm dừng</option>
+                }
+                else
+                {
+                    <option value="1">Tạm dừng</option>
+                }
+
+            </select>
+        </div>
+
+    </div>
+    <div class="actions">
+        <button class="cancel">Bỏ qua</button>
+        <button class="confirm" onclick="_menu.OnSave()">@(Model.Id > 0 ? "Cập nhật" : "Thêm mới")</button>
+    </div>
+</form>
+

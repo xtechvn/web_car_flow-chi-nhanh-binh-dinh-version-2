@@ -1,0 +1,46 @@
+.placeholder {
+  background: var(--colormain);
+  opacity: .1;
+  animation: fading 1.5s infinite;
+}
+
+.box-placeholder {
+  .image {
+    @extend .placeholder;
+
+    img {
+      display: none
+    }
+  }
+
+  .content {
+
+    .title-new,
+    .description {
+      @extend .placeholder;
+
+      * {
+        font-size: 0 !important
+      }
+    }
+
+    .description {
+      height: 20px;
+    }
+  }
+
+}
+
+@keyframes fading {
+  0% {
+    opacity: .1;
+  }
+
+  50% {
+    opacity: .2;
+  }
+
+  100% {
+    opacity: .1;
+  }
+}

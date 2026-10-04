@@ -1,0 +1,92 @@
+@using Entities.ViewModels.Car;
+@using Entities.Models;
+@{
+    Layout = null;
+    var AllCode = (List<AllCode>)ViewBag.AllCode;
+}
+@model List<CartoFactoryModel>
+@if (Model != null && Model.Count > 0)
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Giờ đăng ký online</th>
+                <th>Biển số xe</th>
+                <th>Tên khách hàng (Trại, đại lý)</th>
+                <th>Tên lái xe</th>
+                <th>Số điện thoại</th>
+                <th>Nhóm tài</th>
+                <th>Tải trọng xe vào (kg)</th>
+                <th>Tình trạng </th>
+            </tr>
+        </thead>
+        <tbody id="dataBody-@ViewBag.type">
+            @foreach (var item in Model)
+            {
+                <tr class="CartoFactory_@item.Id" data-queue="@(((DateTime)item.VehicleWeighingTimeComeIn).ToString("HH:mm dd/MM/yyyy"))" data-LoadType="@item.LoadType">
+                    <td>@item.RecordNumber</td>
+                    <td>@(((DateTime)item.RegisterDateOnline).ToString("HH:mm dd/MM/yyyy"))</td>
+                    <td>
+                        @item.VehicleNumber
+                    </td>
+                    <td>@item.CustomerName</td>
+                    <td>@item.DriverName</td>
+                    <td>@item.PhoneNumber</td>
+
+                    <td>@item.LoadTypeName</td>
+                    <td>
+                        @if (ViewBag.type == 1)
+                        {
+                            @(item.VehicleWeightIn != null ? item.VehicleWeightIn.Value.ToString("N0"):"0")
+                        }
+                        else
+                        {
+                            <input type="text" class="input-form VehicleWeightIn currency" maxlength="8" 
+                                   value="@(item.VehicleWeightIn >0?((decimal)item.VehicleWeightIn).ToString("N0"):"")"
+                                   data-original="@(item.VehicleWeightIn >0?((decimal)item.VehicleWeightIn).ToString("N0"):"")"
+                                   data-id="@item.Id"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);" />
+                        }
+                    </td>
+                    <td>
+                        <div class="status-dropdown">
+                            <button class="dropdown-toggle " data-options='[
+                            @foreach (var allcode in AllCode)
+                            {
+
+                                @:{"text":"@allcode.Description","value":"@allcode.CodeValue"}@(allcode != AllCode.Last() ? "," : "")
+
+                            }
+                                                ]'>
+                                @item.VehicleWeighedstatusName
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+}
+else
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Giờ đăng ký online</th>
+                <th>Biển số xe</th>
+                <th>Tên khách hàng (Trại, đại lý)</th>
+                <th>Tên lái xe</th>
+                <th>Số điện thoại</th>
+                <th>Nhóm tài</th>
+                <th>Tải trọng xe (kg)</th>
+                <th>Tình trạng xe</th>
+            </tr>
+        </thead>
+        <tbody id="dataBody-@ViewBag.type">
+        </tbody>
+    </table>
+}
+

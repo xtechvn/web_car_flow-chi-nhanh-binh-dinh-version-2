@@ -1,0 +1,265 @@
+﻿@using Entities.ViewModels.Car;
+@using Entities.Models;
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var LOAD_TYPE = (List<AllCode>)ViewBag.TIME_RESET;
+}
+<style>
+
+    .Zebra_DatePicker {
+        background: #fff;
+        border: 1px solid #aaa;
+        border-radius: 4px;
+        box-shadow: 0px 0px 10px #ccc;
+        color: #222;
+        font: 13px Tahoma, Arial, Helvetica, sans-serif;
+        padding: 5px 5px;
+        position: absolute;
+        display: table;
+        *width: 255px;
+        z-index: 99999
+    }
+
+        .Zebra_DatePicker *, .Zebra_DatePicker *:after, .Zebra_DatePicker *:before {
+            box-sizing: content-box !important
+        }
+
+        .Zebra_DatePicker * {
+            padding: 0
+        }
+
+        .Zebra_DatePicker table {
+            border-collapse: collapse;
+            border-radius: 4px;
+            border-spacing: 0;
+            width: 100%
+        }
+
+        .Zebra_DatePicker th, .Zebra_DatePicker td {
+            border-radius: 4px;
+            padding: 5px;
+            cursor: pointer;
+            text-align: center;
+            min-width: 25px;
+            width: 25px
+        }
+
+        .Zebra_DatePicker .dp_body .dp_not_in_month {
+            color: #666
+        }
+
+        .Zebra_DatePicker .dp_body .dp_current {
+            color: #3a87ad
+        }
+
+        .Zebra_DatePicker .dp_body .dp_selected {
+            background: #337ab7;
+            color: #fff
+        }
+
+        .Zebra_DatePicker .dp_body .dp_disabled {
+            color: #bbb;
+            cursor: text
+        }
+
+            .Zebra_DatePicker .dp_body .dp_disabled.dp_current {
+                color: #b4d5e6
+            }
+
+        .Zebra_DatePicker .dp_body .dp_hover {
+            background: #dedede
+        }
+
+            .Zebra_DatePicker .dp_body .dp_hover.dp_time_control {
+                background-color: #dedede
+            }
+
+        .Zebra_DatePicker .dp_monthpicker td, .Zebra_DatePicker .dp_yearpicker td, .Zebra_DatePicker .dp_timepicker td {
+            width: 33.3333%
+        }
+
+        .Zebra_DatePicker .dp_timepicker .dp_disabled {
+            border: none;
+            color: #222;
+            font-size: 39px;
+            font-weight: bold
+        }
+
+        .Zebra_DatePicker .dp_time_separator div {
+            position: relative
+        }
+
+            .Zebra_DatePicker .dp_time_separator div:after {
+                content: ":";
+                color: #222;
+                font-size: 37px;
+                left: 100%;
+                position: absolute;
+                z-index: 1
+            }
+
+        .Zebra_DatePicker .dp_header {
+            margin-bottom: 5px
+        }
+
+
+        .Zebra_DatePicker .dp_footer {
+            margin-top: 5px
+        }
+
+            .Zebra_DatePicker .dp_footer .dp_icon {
+                width: 50%
+            }
+
+        .Zebra_DatePicker .dp_actions td {
+            border-radius: 4px
+        }
+
+        .Zebra_DatePicker .dp_actions .dp_caption {
+            font-weight: bold;
+            width: 100%
+        }
+
+        .Zebra_DatePicker .dp_actions .dp_previous, .Zebra_DatePicker .dp_actions .dp_next {
+            *padding: 0 10px
+        }
+
+        .Zebra_DatePicker .dp_actions .dp_hover {
+            background-color: #dedede
+        }
+
+        .Zebra_DatePicker .dp_daypicker th {
+            cursor: text;
+            font-weight: bold
+        }
+
+        .Zebra_DatePicker.dp_hidden {
+            display: none
+        }
+
+        .Zebra_DatePicker .dp_icon {
+            height: 16px;
+            background-image: url("images/icons/date.png");
+            background-repeat: no-repeat;
+            text-indent: -9999px;
+            text-indent: 0
+        }
+
+            .Zebra_DatePicker .dp_icon.dp_confirm {
+                background-position: center -123px
+            }
+
+            .Zebra_DatePicker .dp_icon.dp_view_toggler {
+                background-position: center -91px
+            }
+
+                .Zebra_DatePicker .dp_icon.dp_view_toggler.dp_calendar {
+                    background-position: center -59px
+                }
+
+    button.Zebra_DatePicker_Icon {
+        background: url("images/icons/date.png") no-repeat center top;
+        border: none;
+        cursor: pointer;
+        display: block;
+        height: 16px;
+        line-height: 0;
+        padding: 0;
+        position: absolute;
+        text-indent: -9000px;
+        width: 16px
+    }
+
+        button.Zebra_DatePicker_Icon.Zebra_DatePicker_Icon_Disabled {
+            background-position: center -32px;
+            cursor: default
+        }
+
+    .icon-check {
+        cursor: pointer;
+        content: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="17" height="12" viewBox="0 0 17 12" fill="none"><path d="M15.9422 1.06754L5.94223 11.0675C5.88418 11.1256 5.81525 11.1717 5.73938 11.2032C5.66351 11.2347 5.58218 11.2508 5.50004 11.2508C5.41791 11.2508 5.33658 11.2347 5.2607 11.2032C5.18483 11.1717 5.1159 11.1256 5.05785 11.0675L0.682855 6.69254C0.565579 6.57526 0.499695 6.4162 0.499695 6.25035C0.499695 6.0845 0.565579 5.92544 0.682855 5.80816C0.80013 5.69088 0.95919 5.625 1.12504 5.625C1.29089 5.625 1.44995 5.69088 1.56723 5.80816L5.50004 9.74175L15.0579 0.18316C15.1751 0.0658843 15.3342 -1.2357e-09 15.5 0C15.6659 1.2357e-09 15.825 0.0658843 15.9422 0.18316C16.0595 0.300435 16.1254 0.459495 16.1254 0.625347C16.1254 0.7912 16.0595 0.95026 15.9422 1.06754Z" fill="%233A8245"/></svg>')
+    }
+</style>
+<main class="main-section">
+
+
+    <div class="table-head">
+        <a href="/" class="btn-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#344054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+        </a>
+        <h2 class="table-title">Cấu hình</h2>
+
+    </div>
+
+
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width:20%">Tên</th>
+                    <th style="width:25%">Thời gian</th>
+                    <th>Chức năng</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (LOAD_TYPE != null && LOAD_TYPE.Count > 0)
+                {
+                    <input id="Id" style="display:none;" value="@LOAD_TYPE[0].Id">
+                    <tr>
+                        @foreach (var item in LOAD_TYPE)
+                        {
+                            <td>@item.Description</td>
+                            <td>
+
+                                @item.UpdateTime.Value.ToString("HH:mm:ss")
+
+
+                            </td>
+
+                            <td>
+
+                                <div class="capnhat_time" style="display:none;">
+                                    <input class="form-control" id="ExpireDate" value="@LOAD_TYPE[0].UpdateTime.Value.ToString("HH:mm")">
+                                    <a class="cursor-pointer check-time" title="Lưu">
+                                        <i class="icon-check"></i>
+                                    </a>
+                                </div>
+
+                                <a class="cursor-pointer edit-time" title="Chỉnh sửa">
+                                    <i class="icon-edit"></i>
+                                </a>
+                            </td>
+                        }
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+
+    </div>
+    <div>
+        📌 Mô tả  nghiệp vụ :
+    </div>
+    <div>
+        - Các yêu cầu phát sinh sau cut-off time sẽ được xử lý vào ngày làm việc tiếp theo.
+    </div>
+    <div>
+        - Dữ liệu trước cut-off time được tính cho ngày hiện tại.
+    </div>
+</main>
+<script src="~/js/jquery-2.1.4.min.js"></script>
+<script src="~/js/zebra_datepicker.min.js"></script>
+<script>
+
+    $("#ExpireDate").Zebra_DatePicker({
+        format: 'H:i',   // hiển thị giờ:phút
+        view: 'time'     // chỉ bật chọn giờ & phút
+    });
+
+</script>
+@section scripts {
+
+    <script src="~/modules/configuration.js" asp-append-version="true"></script>
+}  

@@ -1,0 +1,148 @@
+﻿@using Entities.ViewModels.Car;
+@using Entities.Models;
+@{
+    Layout = null;
+    var AllCode = (List<AllCode>)ViewBag.AllCode;
+    var LoadingType = (List<AllCode>)ViewBag.LoadingType;
+}
+@model List<CartoFactoryModel>
+<style>
+    .badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+    }
+
+    .badge-danger {
+        background-color: red; /* đỏ */
+    }
+
+    .badge-warning {
+        background-color: orange; /* vang */
+    }
+
+    .badge-success {
+        background-color: #4BAC4D; /* xanh */
+    }
+
+    .name-td {
+        white-space: normal !important;
+        word-break: break-word;
+    }
+</style>
+@if (Model != null && Model.Count > 0)
+{
+
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+          
+                <th>Giờ đăng ký online</th>
+                
+                <th style="max-width:245px!important">Tên khách hàng (Trại, đại lý)</th>
+                <th>Tên lái xe</th>
+
+                <th>Biển số xe</th>
+                <th>Tải trọng xe (kg)</th>
+                <th style="max-width:150px!important">Ghi chú</th>
+                <th style="max-width:150px!important">BV ghi chú</th>
+              
+                <th>TT đăng kiểm</th>
+                
+                <th>Tình trạng xe</th>
+            </tr>
+        </thead>
+        <tbody id="dataBody-@ViewBag.type">
+            @foreach (var item in Model)
+            {
+                <tr class="CartoFactory_@item.Id" data-queue=" @(ViewBag.type == 1 ? item.VehicleArrivalDate != null ? ((DateTime)item.VehicleArrivalDate).ToString("HH:mm dd/MM/yyyy") : "" : item.RegisterDateOnline != null ? ((DateTime)item.RegisterDateOnline).ToString("HH:mm dd/MM/yyyy") : "")">
+                    <td>@item.RecordNumber</td>
+                    <td>@(item.RegisterDateOnline != null ? ((DateTime)item.RegisterDateOnline).ToString("HH:mm dd/MM/yyyy") : "")</td>
+                    <td class="name-td" style="max-width:245Px!important">@item.CustomerName</td>
+                    <td>
+                        <div>@item.DriverName</div>
+                        <div>@item.PhoneNumber</div>
+
+                    </td>
+
+                    <td>
+                        @item.VehicleNumber
+                    </td>
+                    <td>@item.VehicleLoad</td>
+                    <td>@item.LicenseNumber</td>
+                    <td><textarea class="BV_Note" name="BV_Note" value="@item.ProtectNotes">@item.ProtectNotes</textarea></td>
+
+                    <td>
+                        @{
+                            switch (item.TrangThai)
+                            {
+                                case 1:
+                                    <span class="badge badge-warning">Chưa có</span>
+                                    break;
+                                case 2:
+                                    <span class="badge badge-success">Còn hạn</span>
+                                    break;
+                                case 3:
+                                    @:<span class="badge badge-warning">Sắp hết hạn</span>
+                                    break;
+                                case 4:
+                                    @:<span class="badge badge-danger">Hết hạn</span>
+                                    break;
+
+                            }
+                        }
+                    </td>
+
+
+                    <td>
+                        <div class="status-dropdown">
+                            <button class="dropdown-toggle" data-options='[
+                                                                @foreach (var allcode in AllCode)
+                                                                {
+
+                                                                                    @:{"text":"@allcode.Description","value":"@allcode.CodeValue"}@(allcode != AllCode.Last() ? "," : "")
+
+                                                                }
+                                                                                            ]'>
+                                @item.VehicleStatusName
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+
+        </tbody>
+    </table>
+
+}
+else
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Giờ đăng ký online</th>
+                <th style="max-width:245px!important">Tên khách hàng (Trại, đại lý)</th>
+                <th>Tên lái xe</th>
+                <th>Biển số xe</th>
+                <th>Tải trọng xe (kg)</th>
+                <th style="max-width:150px!important">Ghi chú</th>
+                <th style="max-width:150px!important">BV ghi chú</th>
+                @if (ViewBag.type == 1)
+                {
+                    <th>TT đăng kiểm</th>
+                }
+                
+                <th>Tình trạng xe</th>
+            </tr>
+        </thead>
+        <tbody id="dataBody-@ViewBag.type">
+        </tbody>
+    </table>
+}
+

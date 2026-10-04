@@ -1,0 +1,72 @@
+@{
+    var date = DateTime.Now;
+}
+<main class="main-section">
+    <div class="table-head">
+        <a href="/" class="btn-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#344054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+        </a>
+        <h2 class="table-title">Báo cáo</h2>
+        <a class="btn" style="border-radius: 8px; color: #fff; text-align: center; background: #638c1c; padding: 8px 16px; font-size: 14px; text-decoration: none; display: inline-block; line-height: 20px;" href="/SummaryReport/TimeProductDelivery">Báo cáo đo lường thời gian sản xuất</a>
+    </div>
+    <div id="data_Total">
+
+    </div>
+
+    <div class="dashboard-grid">
+        <!-- Cột 1 -->
+        <div class="card-dashboard">
+            <div class="card-header">
+                <h3>Thống kê ngày</h3>
+                <div class="date-picker">
+                    <input type="date" id="date_time_Car" max="@date.ToString("yyyy-MM-dd")" onchange="_summary_report.Seach()" value="@date.ToString("yyyy-MM-dd")">
+                </div>
+            </div>
+
+            <table class="info-table" id="Grid-ProductivityStatistics">
+            </table>
+            <a href="/SummaryReport/DetailSummaryReport">Xem chi tiết</a></br>
+           
+        </div>
+
+        <!-- Cột 2 -->
+
+        <div class="chart-card">
+            <canvas id="revenuChart_KhungGio" class="chartjs-render-monitor"></canvas>
+            
+        </div>
+    </div>
+
+
+
+    <div class="dashboard-grid" style="min-height:300px;">
+        <!-- Cột 2 -->
+        <div class=" card-dashboard" style="min-height:300px;">
+            <canvas id="revenuChart" class="chartjs-render-monitor"></canvas>
+        </div>
+
+
+    </div>
+    <div class="dashboard-grid">
+        <!-- Cột 2 -->
+        <div class=" card-dashboard">
+            <div class="card-header">
+                <h3>Biểu đồ tấn xuất hàng/máng</h3>
+                <div class="date-picker">
+                    <input type="date" id="date_time_mang" max="@date.ToString("yyyy-MM-dd")" onchange="_summary_report.Seach_mang()" value="@date.ToString("yyyy-MM-dd")">
+                </div>
+            </div>
+            <canvas id="revenuChart_mang" class="chartjs-render-monitor"></canvas>
+        </div>
+
+
+    </div>
+
+</main>
+@section scripts {
+    <script type="text/javascript" src="~/lib/Chart/Chart.js"></script>
+    <script type="text/javascript" src="~/lib/Chart/Chart.PieceLabel.js"></script>
+    <script  src="~/modules/summaryreport.js" asp-append-version="true"></script>
+}  

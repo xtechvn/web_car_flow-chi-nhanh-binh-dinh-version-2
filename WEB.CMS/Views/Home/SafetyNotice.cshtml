@@ -1,0 +1,64 @@
+<main class="main-section">
+
+
+    <div class="table-head">
+        <a href="/" class="btn-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#344054" stroke-width="2" stroke-linecap="round"
+                      stroke-linejoin="round" />
+            </svg>
+        </a>
+        <h2 class="table-title">Thông báo</h2>
+
+    </div>
+    <div class="table-head">
+        <button class="open-audio" style="width:40px !important">
+            <span class="icon "><img src="/images/graphics/SpeakerHigh.png" height="25" alt=""></span>
+            <audio id="myAudio_an_toan" controls style="display:none!important;">
+                <source src="~/audio/an_toan.mp3" type="audio/mpeg" />
+            </audio>
+    </button>
+    </div>
+    
+    <div class="table-wrapper simple-scrollbar ss-container" style="height: 310px;">
+        <div class="ss-wrapper">
+            <div class="ss-content">
+                <div>1. Xe đến nhận hàng phải đảm bảo sàng xe sạch sẽ và lót bạt sàng  </div>
+                <div>2. Không xả rác, hốt rác bỏ vào các thùng rác bên trong bãi xe  </div>
+                <div>3. Chú ý các điểm mù khuất tầm nhìn xung quanh, không di chuyển trước các đầu xe, đi bộ 2 bên lối đi an toàn dọc phía sau các xe  </div>
+                <div>4. Không sử dụng điện thoại khi đang lái xe và đang đi bộ bên trong bãi đậu xe, dễ gây mất tập trung, tai nạn  </div>
+                <div>5. Không làm việc trên cao trên 1.2m, không leo cao kéo bạt.  </div>
+                <div>6. Tuân thủ các nguyên tắc hướng dẫn an toàn tài xế tại nhà máy  </div>
+                <div>7. Hỏi bảo vệ, đại diện Cargill để được hỗ trợ, hướng dẫn  </div>                   
+                </div>
+            </div>
+        </div>
+  
+    </div>
+
+   
+</main>
+
+@section scripts {
+    <script>
+        $(document).on('click', '.open-audio', function (e) {
+            var audioPlayer = document.getElementById('myAudio_an_toan');
+
+            if (audioPlayer) {
+                // Vô hiệu hóa nút để tránh click nhiều lần
+                $('.open-audio').prop('disabled', true);
+                $('.open-audio').css('opacity', '0.5');
+
+                // Phát âm thanh
+                audioPlayer.play();
+
+                // Bật lại nút khi phát xong
+                audioPlayer.onended = function () {
+                    $('.open-audio').prop('disabled', false);
+                    $('.open-audio').css('opacity', '1');
+                    console.log('✅ Đọc xong audio an toàn, nút đã bật lại.');
+                };
+            }
+        });
+    </script>
+}

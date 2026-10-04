@@ -1,0 +1,40 @@
+﻿
+@{
+    ViewData["Title"] = "Đăng nhập hệ thống";
+    Layout = "~/Views/Shared/_AccountLayout.cshtml";
+    string returnURL = (string)ViewBag.ReturnURL;
+}
+<div class="login-page">
+    <div class="login-left">
+        <div class="login-box">
+            <div class="logo">
+                <img src="/images/graphics/Cargill Logo R Horizontal Tagline Black and Leaf Green RGB.svg" alt="Cargill">
+            </div>
+            <h2 class="title">ĐĂNG NHẬP</h2>
+            <form class="login-form" id="form-login" data-url="@returnURL">
+                <span id="validate-general" class="field-validation-valid text-danger" style="color:red"></span>
+                <div class="form-group">
+                    <input id="user-name" class="form-control" type="text" name="user-name" placeholder="Tên tài khoản" value="">
+                    <span id="validate-username"style="color:red" class="field-validation-valid text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <input id="password" class="form-control" type="password" name="user-name" placeholder="Mật khẩu" value="">
+                    <span id="validate-password" class="field-validation-valid text-danger" style="color:red"></span>
+                </div>
+                <button onclick="_login.Login()" class="btn-login">Đăng nhập</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="login-right">
+        <img src="/images/graphics/bg-login.png" alt="Cargill Factory" class="bg">
+        <div class="footer">
+            TRUNG THỰC – MINH BẠCH – CÔNG BẰNG
+        </div>
+    </div>
+</div>
+
+@section scripts {
+    <script src="/modules/account.js" asp-append-version="true"></script>
+    <script>_login.Initialization() </script>
+}

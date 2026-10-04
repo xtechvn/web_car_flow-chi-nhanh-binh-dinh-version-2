@@ -1,0 +1,94 @@
+﻿@{
+    Layout = null;
+    List<Entities.Models.AllCode> branch = (List<Entities.Models.AllCode>)ViewBag.Branch;
+}
+@using Entities.Models
+@{
+    var _DepartmentList = (List<Department>)ViewBag.DepartmentList;
+    var _BranchList = (List<AllCode>)ViewBag.BranchList;
+
+    async Task ShowDepartment(Department item, int level = 0)
+    {
+        var childs = _DepartmentList.Where(s => s.ParentId == item.Id).ToList();
+        string str_level = string.Empty;
+        for (int i = 0; i < level; i++)
+        {
+            str_level += "---";
+        }
+
+        <option value="@item.Id">@str_level @item.DepartmentName</option>
+
+        @if (childs != null && childs.Any())
+        {
+            level++;
+            foreach (var child in childs)
+            {
+                await ShowDepartment(child, level);
+            }
+        }
+    }
+}
+@model Department
+<style>
+    .form-group label.error {
+        color: red;
+    }
+</style>
+<form id="form_department">
+    <input type="hidden" id="Id" name="Id" value="@Model.Id" />
+    <input type="hidden" id="ParentId" name="ParentId" value="@Model.ParentId" />
+
+    <div class="form-grid">
+        <div class="form-group">
+            <label>Tên phòng ban <span>*</span></label>
+            <input type="text" id="DepartmentName" name="DepartmentName" class="form-control"
+                   value="@Model.DepartmentName" />
+        </div>
+
+        <div class="form-group">
+            <label>Chi nhánh</label>
+            <select id="branch-code" name="Branch" class="form-control">
+                <option value="-1" @(Model.Branch == -1 ? "selected" : "")>———— Tất cả ————</option>
+                @if (branch != null && branch.Count > 0)
+                {
+                    foreach (var item in branch)
+                    {
+                        <option value="@item.CodeValue" @(Model.Branch == item.CodeValue ? "selected" : "")>
+                            @item.Description
+                        </option>
+                    }
+                }
+            </select>
+        </div>
+
+
+    </div>
+    <div class="form-group" style="margin-top:25px;">
+        <label>Mô tả</label>
+        <input type="text" style="margin-bottom:25px;" id="Description" name="Description" class="form-control"
+               placeholder="Vui lòng nhập" value="@Model.Description" />
+    </div>
+
+    <div class="actions">
+        <button type="button" class="cancel" onclick="_department.modal_element.modal('hide')">Hủy</button>
+        <button type="button" class="confirm" onclick="_department.OnSave()">@(Model.Id == 0 ? "Thêm mới" : "Cập nhật")</button>
+    </div>
+</form>
+
+
+<script>
+    $(document).ready(function() {
+        // Initialize select2 for branch dropdown
+        $('#branch-code').select2({
+            minimumResultsForSearch: Infinity
+        });
+
+        // Set default values for new department
+    @if (Model.Id == 0)
+    {
+        <text>
+                $('#IsReport').val('true');
+        </text>
+    }
+    });
+</script>

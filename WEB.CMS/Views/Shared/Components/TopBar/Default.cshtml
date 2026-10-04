@@ -1,0 +1,74 @@
+﻿@using Entities.Models
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    var userId = !string.IsNullOrEmpty(ViewBag.UserId) ? int.Parse(ViewBag.UserId) : 0;
+    var _ListMenu = (List<Menu>)ViewBag.Menu;
+    var ListNotify = (List<Menu>)ViewBag.GetListNotify;
+    var _ParentMenus = _ListMenu.Where(s => s.ParentId == (int)ViewBag.ParentId).OrderBy(s => s.OrderNo);
+    var ActivedParentId = (int)ViewBag.ParentId;
+    var ActivedMenuId = (int)ViewBag.MenuId;
+}
+<div class="header__logo">
+    <img src="/images/graphics/logo.svg" alt="Cargill">
+</div>
+<div class="header__right">
+    <div class="header-actions">
+        <a href="/" class="action-btn menu-btn">
+            <img src="/images/icons/menu.svg" alt="Menu">
+        </a>
+        <div class="settings-dropdown">
+            <a class="settings-btn" id="settingsDropdown" href="#">
+                <img src="/images/icons/settings.svg" alt="Cài đặt" width="24" height="24">
+            </a>
+            <ul class="settings-menu">
+                @{
+                    var childDatas = _ListMenu.Where(s => s.ParentId == ActivedMenuId);
+                    @if (childDatas != null && childDatas.Any())
+                    {
+                        @foreach (var subMenu in childDatas)
+                        {
+                            <li>
+                                <a href="@subMenu.Link" >
+                                    
+                                    @subMenu.Name
+                                </a>
+                            </li>
+                        }
+                    }
+                }
+
+                @*<li><a href="/Role">⚙️ Quản lý nhóm quyền</a></li>
+                <li><a href="/Department">🏢 Quản lý phòng ban</a></li>*@
+            </ul>
+        </div>
+        <a href="" class="action-btn">
+            <img src="/images/icons/bell.svg" alt="Thông báo">
+            <span class="badge">00+</span>
+
+        </a>
+        <div class="settings-dropdown">
+            <div class="settings-btn user-box">
+                <img src="/images/icons/user.svg" alt="">
+                <span>Chào: @ViewBag.UserName</span>
+            </div>
+            <ul class="settings-menu">
+                <li><a class="menu-change-pass" onclick="_account.OnGetDatailUser()" style="cursor:pointer"><img src="/images/icons/user-outline.svg" alt=""> Thông tin tài khoản</a></li>
+                <li>
+                    <a class="menu-change-pass" onclick="_account.OnGetChangePassUser()" style="cursor:pointer">
+                        <img src="/images/icons/lock.svg" alt=""> Đổi mật khẩu
+                    </a>
+                </li>
+
+                <li>
+                    <a href="javascript:void(0)" class="btn-logout">
+                        <img src="/images/icons/logout.svg" alt=""> Đăng xuất
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+    </div>
+
+</div>
+
+

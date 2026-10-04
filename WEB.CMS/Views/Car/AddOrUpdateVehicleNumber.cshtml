@@ -1,0 +1,46 @@
+﻿<form id="form_update_name" onsubmit="return false">
+
+    <input type="hidden" id="Id" value="@ViewBag.Id" />
+    <div class="form-grid">
+
+        <div class="form-group">Biển số xe</label>
+            <input type="text" id="VehicleNumber" style="width:100%" value="@ViewBag.vehicleNumber"  />
+        </div>
+
+    </div>
+    <div class="actions">
+        <button class="cancel">Bỏ qua</button>
+        <button class="confirm" onclick="_processing_is_loading.AddOrUpdateName()">Cập nhật</button>
+    </div>
+
+
+</form>
+
+
+<script>
+      $('#VehicleNumber').on('input', function () {
+        let value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+        // 2 số đầu
+        let province = value.slice(0, 2).replace(/\D/g, '');
+
+        // phần còn lại
+        let rest = value.slice(2);
+
+        // 1–2 chữ
+        let letters = rest.match(/^[A-Z]{0,2}/)?.[0] || '';
+        rest = rest.slice(letters.length);
+
+        // 5 số cuối
+        let numbers = rest.replace(/\D/g, '').slice(0, 5);
+
+        let result = province + letters;
+
+        if (province.length === 2 && letters.length >= 1) {
+            result += '-' + numbers;
+        }
+
+
+        this.value = result;
+    });
+</script>

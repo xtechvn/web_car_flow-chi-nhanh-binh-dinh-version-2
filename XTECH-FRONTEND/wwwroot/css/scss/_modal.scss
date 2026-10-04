@@ -1,0 +1,108 @@
+// @import "datepicker.min.scss";
+
+.modal-header{
+    border-bottom:0;
+    .modal-title{
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close{
+        font-family: -webkit-body;
+        opacity: 1;
+        font-size: 35px;
+        outline: 0;
+    }
+}
+.modal-body{
+    padding-top: 0;
+}
+.modal-content{
+    border: 0;
+}
+.modal-login{
+    .modal-dialog{
+        max-width: 870px;
+    }
+    .modal-content{
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .close{
+        font-family: -webkit-body;
+        opacity: 1;
+        font-size: 40px;
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        z-index: 2;
+        text-shadow: none;
+    }
+    .modal-body{
+        padding: 0;
+    }
+    &__left{
+        width: 370px;
+        background: #4939B5;
+        padding: 64px;
+        color: rgba(255, 255, 255, 0.65);
+        font-size: 16px;
+        line-height: 1.5;
+        h2{
+            color: #fff;
+            font-weight: 500;
+            font-size: 28px;
+            margin-bottom: 24px;
+        }
+        .email{
+            margin-left: -40px;
+        }
+    }
+    &__right{
+        width: 500px;
+        padding: 64px;
+        position: relative;
+    }
+    @media (max-width: 1025px) {
+        &__left{
+            padding: 40px;
+            width: calc(100% - 500px);
+        }
+        &__right{
+            padding: 40px;
+
+        }
+    }
+    @media (max-width: 768px) {
+        &__left{
+            padding: 30px;
+            width: calc(100% - 450px);
+        }
+        &__right{
+            padding: 30px;
+            width: 450px;
+        }
+    }
+    @media (max-width: 740px) {
+        .modal-content{
+            border-radius: 0;
+        }
+        .close{
+            color: #fff;
+            top: 10px;
+        }
+        &__left{
+            width: 100%;
+            padding: 20px;
+            .email,p{display: none;}
+            h2{
+                margin-bottom: 0;
+                font-size: 20px;
+                padding-right: 40px;
+            }
+        }
+        &__right{
+            padding: 20px;
+            width: 100%;
+        }
+    }
+}

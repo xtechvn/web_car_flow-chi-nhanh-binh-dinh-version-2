@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Web.Cargill.CMS": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:64005;http://localhost:64002"
+    }
+  }
+}

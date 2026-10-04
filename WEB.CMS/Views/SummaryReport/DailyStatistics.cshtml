@@ -1,0 +1,200 @@
+﻿@using Entities.ViewModels.Car;
+@using Entities.Models;
+@using Utilities.Contants;
+@{
+
+    var title = "Báo cáo thống kê ngày";
+    var TotalData = (TotalVehicleInspection)ViewBag.TotalData;
+}
+@model List<CartoFactoryModel>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>STT</th>
+            <th>Giờ đăng ký online</th>
+            <th>Tên KH (Trại, đại lý)</th>
+            <th>Tên lái xe</th>
+            <th>Số điện thoại</th>
+            <th>Biển số xe</th>
+            <th>Nhóm tài</th>
+            <th>Giờ xe có mặt</th>
+            <th>Giờ vào cân</th>
+            <th>Giờ cân xong đầu vào</th>
+            <th>Máng</th>
+            <th>Giờ vào máng</th>
+            <th>Giờ ra máng</th>
+            <th>Giờ cân xong đầu ra</th>
+            <th>Thời gian xuất hàng(Phút)</th>
+            <th>Tình trạng</th>
+            <th>Tổng trọng lượng đã lấy(KG)</th>
+            <th>CSOS</th>
+            <th>Cân vào(KG)</th>
+            <th>Cân ra(KG)</th>
+            <th>NET WEIGHT(KG)</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @if (Model != null && Model.Count > 0)
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.RecordNumber</td>
+                    <td>@(item.RegisterDateOnline != null ? item.RegisterDateOnline.Value.ToString("HH:mm dd/MM/yyyy") : "")</td>
+                    <td>@item.CustomerName</td>
+                    <td>@item.DriverName</td>
+                    <td>@item.PhoneNumber</td>
+                    <td>@item.VehicleNumber</td>
+                    <td>@item.LoadTypeName</td>
+                    <td>@(item.VehicleArrivalDate != null ? item.VehicleArrivalDate.Value.ToString("HH:mm dd/MM/yyyy") : "")</td> @*bước 1*@
+                    <td>@(item.VehicleWeighingTimeComeIn != null ? item.VehicleWeighingTimeComeIn.Value.ToString("HH:mm dd/MM/yyyy") : "")</td>@*Bước 3*@
+                    <td>@(item.VehicleWeighingTimeComeOut != null ? item.VehicleWeighingTimeComeOut.Value.ToString("HH:mm dd/MM/yyyy") : "")</td>@*Bước 4*@
+                    <td>@item.TroughTypes</td>
+                    <td>@(item.VehicleTroughTimeComeIn != null ? item.VehicleTroughTimeComeIn.Value.ToString("HH:mm dd/MM/yyyy") : "")</td>@*bước 5 bốc hành*@
+                    <td>@(item.VehicleTroughTimeComeOut != null ? item.VehicleTroughTimeComeOut.Value.ToString("HH:mm dd/MM/yyyy") : "")</td>@*bước 5 hoàn thành*@
+                    <td>@(item.VehicleWeighingTimeComplete != null ? item.VehicleWeighingTimeComplete.Value.ToString("HH:mm dd/MM/yyyy") : "")</td>@*Bước 6*@
+                    <td>@(item.totalMinutes)</td>
+                    <td>
+                        @* Ưu tiên kiểm tra từ Bước 6 xuống Bước 1 *@
+                        @if ((item.VehicleTroughStatus == (int)VehicleTroughStatus.Hoan_thanh) &&
+                                        (item.VehicleWeighingStatus != null ))
+                        {
+                            <div>Bước 6</div>
+                        }
+                        else if ((item.VehicleWeighedstatus == (int)VehicleWeighedstatus.Da_Can_Xong_Dau_Cao) && item.TroughTypes !=null &&
+                        (item.VehicleTroughStatus != null || item.VehicleTroughStatus == (int)VehicleTroughStatus.Blank))
+                        {
+                            <div>Bước 5</div>
+                        }
+                        else if ((item.VehicleWeighingType == (int)VehicleWeighingType.DA_Vao_Can) &&
+                        (item.VehicleWeighedstatus != null || item.VehicleWeighedstatus == (int)VehicleWeighedstatus.Blank))
+                        {
+                            <div>Bước 4</div>
+                        }
+                        else if ((item.LoadingStatus == (int)LoadingStatus.Da_HTTC) &&
+                        (item.VehicleWeighingType != null || item.VehicleWeighingType == (int)VehicleWeighingType.Blank))
+                        {
+                            <div>Bước 3</div>
+                        }
+                        else if ((item.VehicleStatus == (int)VehicleStatus.Da_Den_NM) &&
+                        (item.LoadingStatus != null || item.LoadingStatus == (int)LoadingStatus.Blank))
+                        {
+                            <div>Bước 2</div>
+                        }
+                        else if (item.VehicleStatus != null && (item.LoadingStatus == null || item.LoadingStatus == (int)VehicleWeighingType.Blank))
+                        {
+                            <div>Bước 1</div>
+                        }
+
+                    </td>
+                    <td>@item.TotalVehicleTroughWeight</td>
+                    <td>@item.FullName</td>
+                    <td>@(item.VehicleWeightIn!= null ? item.VehicleWeightIn.Value.ToString("N0") : "0")</td>
+                    <td>@(item.VehicleWeightOut!= null ? item.VehicleWeightOut.Value.ToString("N0") : "0")</td>
+                    <td>@(item.NetWeight!= null ? item.NetWeight.Value.ToString("N0") : "0")</td>
+                </tr>
+            }
+        }
+        @if (TotalData != null)
+        {
+            <tr>
+                <th>Tổng số xe</th>
+                <th>Tổng số xe đã lấy hàng</th>
+                <th>Tổng số xe chưa lấy hàng</th>
+                <th>Tổng số xe đến lấy sau 16h</th>
+                <th>Máng 3</th>
+                <th>Máng 4</th>
+                <th>Máng 5</th>
+                <th>Máng 6</th>
+                <th>Máng 7</th>
+                <th>Máng 8</th>
+                <th>Giờ vào máng</th>
+                <th>Giờ ra máng</th>
+                <th>Giờ cân xong đầu ra</th>
+                <th>Tổng thời gian xuất hàng/ngày</th>
+                <th>Trung bình thời gian xuất hàng/ xe</th>
+                <th>Tổng trọng lượng đã lấy(KG)</th>
+                <th>CSOS</th>
+                <th></th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+            <tr>
+                <td>@TotalData.TotalCar</td>
+                <td>@TotalData.TotalCarCompleted</td>
+                <td>@TotalData.TotalCarUnfinished</td>
+                <td>@TotalData.TotalCarArriving16h</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td>@TotalData.TotalTimeInHour</td>
+                <td>@TotalData.AvgTimePerCompletedCar_Hour</td>
+                <td>@TotalData.TotalWeightTroughType</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+         
+                <td>Tổng số xe</td>
+                <td>@TotalData.TotalTroughType3</td>
+                <td>@TotalData.TotalTroughType4</td>
+                <td>@TotalData.TotalTroughType5</td>
+                <td>@TotalData.TotalTroughType6</td>
+                <td>@TotalData.TotalTroughType7</td>
+                <td>@TotalData.TotalTroughType8</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+				 <td></td>
+				 <td></td>
+                 <td></td>
+                 <td></td>
+                 <td></td>
+                 <td></td>
+            </tr>
+
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+             
+                <td>Tổng số kg</td>
+                <td>@TotalData.TotalWeightTroughType3</td>
+                <td>@TotalData.TotalWeightTroughType4</td>
+                <td>@TotalData.TotalWeightTroughType5</td>
+                <td>@TotalData.TotalWeightTroughType6</td>
+                <td>@TotalData.TotalWeightTroughType7</td>
+                <td>@TotalData.TotalWeightTroughType8</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+				 <td></td>
+				 <td></td>
+                 <td></td>
+                 <td></td>
+                 <td></td>
+                 <td></td>
+            </tr>
+
+        }
+    </tbody>
+</table>

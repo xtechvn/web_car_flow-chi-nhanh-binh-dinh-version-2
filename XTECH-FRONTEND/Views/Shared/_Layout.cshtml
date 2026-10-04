@@ -1,0 +1,185 @@
+﻿
+<!DOCTYPE html>
+<html lang="vi" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=yes">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="" />
+
+    <meta name="description" content="Thiết kế web giá tốt| X-tech.vn">
+    <meta name="keywords" content="Thiết kế web giá tốt| X-tech.vn">
+    <meta name="facebook-domain-verification" content="1qclt4wrkj17wai32sucu8jwon0tzg" />
+    <meta name="google-site-verification" content="tL3QNF52pRbSx137o_RowJcIqG7XWXsS9tGxU6JUY4U" />
+
+    @if (IsSectionDefined("HeadMeta"))
+    {
+        @RenderSection("HeadMeta")
+    }
+    else
+    {
+        <meta roperty="og:image" content="http://be.x-tech.vn/uploads/images/logo-X-tech2.png">
+        <meta property="og:description" content="Thiết kế web giá tốt| X-tech.vn">
+        <meta property="og:title" content="@ViewData["Title"]" />
+    }
+
+    <title>@ViewData["Title"]</title>
+    <link type="image/x-icon"
+          href="http://be.x-tech.vn/uploads/images/logo-X-tech2.png"
+          rel="shortcut icon" />
+    <meta id="metasocial-social" property="og:title" content="@ViewData["Title"]" />
+
+   
+    <link rel="stylesheet" href="~/css/fontAwesome/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="~/css/bootstrap.css" />
+    <link rel="stylesheet" href="~/css/style.css" />
+
+    <link rel="stylesheet" href="~/libs/jquery/juery-ui.css" media="all" />
+    <link rel="stylesheet" href="~/libs/toastr/toastr.min.css" media="all" />
+    <!-- build:head2 -->
+    <!-- build:head -->
+</head>
+
+<body class="homepage">
+    <style>
+        #client-btn
+        {
+            color: white;
+            position: relative;
+            cursor: pointer;
+        }
+
+        #client-btn:hover {
+            text-decoration: underline;
+        }
+
+        #client-dashboard:hover
+        {
+            color: #210E41;
+            text-decoration: underline;
+        }
+    </style>
+
+    @await Component.InvokeAsync("Menu")
+
+    @RenderBody()
+
+
+
+
+    <div class="overlay"></div>
+    <!--Footer-->
+    <footer class="footer">
+        <div class="footer-top">
+            <div class="container">
+                <div class="grid grid__3">
+                    <div class="col gap">
+                        <a class="logo" href="/" title="#"><img src="~/images/graphics/logo-X-tech2.png" style="width: 39px;"><strong style="color:#332F3B;"> Công ty cổ phần công nghệ và giải pháp X-Tech</strong></a>
+
+
+                        <div>
+                            Số chứng nhận đăng ký kinh doanh:
+                            0110676792 cấp bởi sở kế hoạch và đầu tư
+                            thành phố Hà Nội ngày 05/04/2024
+                        </div>
+                        <div class="social">
+                            <a href="javascripts:;"><i class="fa fa-facebook"></i></a>
+                            <a href="javascripts:;"><i class="fa fa-twitter"></i></a>
+                            <a href="javascripts:;"><i class="fa fa-youtube-play"></i></a>
+                            <a href="javascripts:;"><i class="fa fa-linkedin"></i></a>
+                            <a href="javascripts:;"><i class="fa fa-instagram"></i></a>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <h3 class="title">Dịch vụ chúng tôi</h3>
+                        <ul>
+                            <li><a href="/bang-gia-thiet-ke-website">Giá cả</a></li>
+                            <li><a href="/dich-vu">Dịch vụ</a></li>
+                            <li><a href="/tin-tuc">Tin tức</a></li>
+                            <li><a href="/lien-he">Liên hệ</a></li>
+                            <li><a href="/ve-chung-toi">Giới thiệu</a></li>
+                        </ul>
+                    </div>
+                    <div class="col" style="display:none;">
+                        <h3 class="title">Other Resources</h3>
+                        <ul>
+                            <li><a href="javascripts:;">About Us</a></li>
+                            <li><a href="/Pricing/Index">Pricing</a></li>
+                            <li><a href="javascripts:;">Privacy Policy</a></li>
+                            <li><a href="javascripts:;">Services</a></li>
+                            <li><a href="/Contact">Contact Us</a></li>
+                        </ul>
+                    </div>
+                    <div class="col contact">
+                        <h3 class="title">Liên hệ</h3>
+                        <p>
+                            <i class="fa fa-map-marker"></i>
+                            Địa chỉ trụ sở chính: Tầng 11, tòa nhà Zen Tower, số 12 đường Khuất Duy Tiến, Phường Thanh Xuân Trung, Quận Thanh Xuân, Thành phố Hà Nội, Việt Nam
+                        </p>
+                        @*<p>
+                                <i class="fa fa-phone"></i>
+                                039.938.3948
+                            </p>*@
+                        <p>
+                            <i class="fa fa-paper-plane"></i>
+                            info@x-tech.vn
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--
+        <div class="copy_right">
+            <div class="container">
+                Copyright 2024 Solit. Designed By <a href="javascripts:;" style="color:#BC9FEB">xtech.vn</a>
+            </div>
+        </div>
+        -->
+    </footer>
+    <!--End Footer-->
+
+    <div class="overlay-bg"></div>
+    <!--Back to top-->
+    <a href="javascript:;" id="to_top">
+        <i class="fa fa-long-arrow-up"></i>
+    </a>
+
+    <!--Jquery lib-->
+    <script type="text/javascript" src="~/js/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="~/js/swiper.min.js"></script>
+    <script type="text/javascript" src="~/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/js/aos.js"></script>
+    <script type="text/javascript" src="~/js/common.js"></script>
+    <script type="text/javascript" src="~/modules/cms-common.js"></script>
+
+    <script src="~/libs/jquery-validation/jquery.validate.min.js"></script>
+    <script src="~/libs/jquery-validation/additional-methods.min.js"></script>
+    <script type="text/javascript" src="~/libs/jquery/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript" src="~/libs/jquery/jquery-ui.js"></script>
+    <script type="text/javascript" src="~/libs/jquery/datepicker-vi.js"></script>
+    <script type="text/javascript" src="~/libs/toastr/toastr.min.js"></script>
+    <script type="text/javascript" src="~/libs/bootstrap.daterangepicker/daterangepicker.js"></script>
+
+    <script type="text/javascript" src="~/js/jquery.magnific-popup.min.js"></script>
+    <script type="text/javascript" src="~/js/jquery.scrollbar.min.js"></script>
+
+
+    <script asp-append-version="true" src="~/modules/LoginOrRegister.js"></script>
+    <script asp-append-version="true" src="~/modules/Menu.js"></script>
+
+    <!-- build:script -->
+    @await RenderSectionAsync("Scripts", required: false)
+
+
+</body>
+
+</html>
+
+
+
+
+
+
+
+

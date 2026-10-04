@@ -1,0 +1,162 @@
+﻿@using Entities.ViewModels.Car;
+@using Entities.Models;
+@{
+    Layout = null;
+    var type = (int)ViewBag.type;
+    var AllCode = (List<AllCode>)ViewBag.AllCode;
+}
+@model List<CartoFactoryModel>
+@if (type == 1)
+{
+    @if (Model != null && Model.Count > 0)
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Giờ đăng ký online</th>
+                    <th>Tên khách hàng (Trại, đại lý)</th>
+                    <th>Tên lái xe</th>
+                    <th>Số điện thoại</th>
+                    <th>Biển số xe</th>
+                    <th>Nhóm tài</th>
+                    <th>Tình trạng</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="dataBody-@ViewBag.type">
+                @foreach (var item in Model)
+                {
+                    <tr class="CartoFactory_@item.Id" data-queue="@item.RecordNumber">
+                        <td>@item.RecordNumber</td>
+                        <td>@(((DateTime)item.RegisterDateOnline).ToString("HH:mm dd/MM/yyyy"))</td>
+                        <td>@item.CustomerName</td>
+                        <td>@item.DriverName</td>
+                        <td>@item.PhoneNumber</td>
+                        <td class="td-audio">
+                            @item.VehicleNumber
+                        </td>
+                        <td>@item.LoadTypeName</td>
+                        <td>
+                            <div class="status-dropdown">
+                                <button class="dropdown-toggle " data-options='[
+                                            @foreach (var allcode in AllCode)
+                                            {
+
+                                                    @:{"text":"@allcode.Description","value":"@allcode.CodeValue"}@(allcode != AllCode.Last() ? "," : "")
+
+                                            }
+                                                                        ]'>
+                                    @item.VehicleWeighingTypeName
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="open-audio" style="width:40px !important">
+                                <span class="icon "><img src="/images/graphics/SpeakerHigh.png" height="25" alt=""></span>
+                                <audio id="myAudio_@item.Id" controls style="display:none!important;">
+                                    <source src="@item.AudioPath" type="audio/mpeg" />
+                                </audio>
+                            </button>
+                        </td>
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Giờ đăng ký online</th>
+                    <th>Tên khách hàng (Trại, đại lý)</th>
+                    <th>Tên lái xe</th>
+                    <th>Số điện thoại</th>
+                    <th>Biển số xe</th>
+                    <th>Nhóm tài</th>
+                    <th>Tình trạng</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="dataBody-@ViewBag.type">
+            </tbody>
+        </table>
+    }
+}
+else
+{
+    @if (Model != null && Model.Count > 0)
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Biển số xe</th>
+                    <th>Số điện thoại</th>
+                    <th>Nhóm tài</th>
+                    <th>Tình trạng</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="dataBody-@ViewBag.type-@ViewBag.LoadType">
+                @foreach (var item in Model)
+                {
+                    <tr class="CartoFactory_@item.Id" data-queue="@(((DateTime)item.ProcessingIsLoadingDate).ToString("HH:mm dd/MM/yyyy"))">
+                        <td>@item.RecordNumber</td>
+                        <td class="td-audio">
+                            @item.VehicleNumber
+                        </td>
+                        <td>@item.PhoneNumber</td>
+
+                        <td>@item.LoadTypeName</td>
+                        <td>
+                            <div class="status-dropdown">
+                                <button class="dropdown-toggle " data-options='[
+                                            @foreach (var allcode in AllCode)
+                                            {
+
+                                                    @:{"text":"@allcode.Description","value":"@allcode.CodeValue"}@(allcode != AllCode.Last() ? "," : "")
+
+                                            }
+                                                                                    ]'>
+                                    @item.VehicleWeighingTypeName
+                                </button>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="open-audio" style="width:40px !important">
+                                <span class="icon"><img src="/images/graphics/SpeakerHigh.png" height="25" alt=""></span>
+                                <audio id="myAudio_@item.Id" controls style="display:none!important;">
+                                    <source src="@item.AudioPath" type="audio/mpeg" />
+                                </audio>
+                            </button>
+                        </td>
+                    </tr>
+                }
+
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Biển số xe</th>
+                    <th>Số điện thoại</th>
+                    <th>Nhóm tài</th>
+                    <th>Tình trạng</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody id="dataBody-@ViewBag.type-@ViewBag.LoadType">
+            </tbody>
+        </table>
+    }
+}
+
+

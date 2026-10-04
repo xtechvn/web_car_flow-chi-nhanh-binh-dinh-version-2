@@ -1,0 +1,90 @@
+// Var detail VNE
+$url: "images" !default;
+
+:root {
+  --yellow: #e0ad1f;
+  --orange: #B76E23;
+  --green: #089256;
+  --blue: #076DB6;
+  --white: #fff;
+  --prink: #ff0063;
+  --purple: #7e6fda;
+  --colormain: #6610F2;
+  --white: #fff;
+  --dark: #282B3E;
+  --gray600: #495261;
+  --gray500: #505565;
+  --gray10: #FBFBFB;
+  --bg-detail: #FCFAF6;
+  --bg-agray: #f7f7f7;
+  --bg-agray1: #E5E5E5;
+  --bg-agray2: #F6F7FB;
+  --font1: 'SF Pro Display';
+  --blue700: #00234B;
+  --blue600: #1C2F6E;
+  --blue500: #274C98;
+  --gray200: #D2D7E1;
+  --gray100: #E3E7EF;
+  --gray50: #F3F5F8;
+  --border: #D2D7E1;
+}
+
+
+@mixin cubic-transition($delay, $duration, $property) {
+  transition: {
+    duration: $duration;
+    property: $property;
+    timing-function: cubic-bezier(.7, 1, .7, 1);
+  }
+}
+
+/* @include cubic-transition($delay: 0, $duration: 200ms, $property: (all)); */
+%has_transition {
+  @include cubic-transition($delay: 0, $duration: 200ms, $property: (all));
+}
+
+@mixin placeholder {
+  &::-webkit-input-placeholder {
+    @content
+  }
+
+  &:-moz-placeholder {
+    @content
+  }
+
+  &::-moz-placeholder {
+    @content
+  }
+
+  &:-ms-input-placeholder {
+    @content
+  }
+}
+
+%flexbox {
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flex;
+  display: -o-flex;
+  display: flex;
+}
+
+.flexbox {
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flex;
+  display: -o-flex;
+  display: flex;
+}
+
+.no-flexbox {
+  display: inherit;
+}
+
+%clearfix {
+  &:after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}

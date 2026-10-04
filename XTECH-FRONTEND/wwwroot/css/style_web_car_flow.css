@@ -1,0 +1,342 @@
+﻿<style >
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    margin: 0;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.container {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    max-width: 900px;
+    width: 100%;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: calc(100vh - 20px);
+}
+
+.input-section {
+    padding: 25px 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    overflow-y: auto;
+}
+
+.output-section {
+    padding: 25px 20px;
+    background: #f8f9ff;
+    border-left: 3px solid #667eea;
+    overflow-y: auto;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.input-icon {
+    width: 30px;
+    height: 30px;
+    background: #667eea;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.output-icon {
+    width: 30px;
+    height: 30px;
+    background: #28a745;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: #555;
+    font-size: 14px;
+}
+
+input[type="text"], input[type="tel"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: white;
+    box-sizing: border-box;
+}
+
+    input[type="text"]:focus, input[type="tel"]:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+.submit-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+}
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .submit-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+.output-box {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid #667eea;
+}
+
+.status-message {
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    font-weight: 600;
+}
+
+.status-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-waiting {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.queue-number {
+    font-size: 36px;
+    font-weight: bold;
+    color: #667eea;
+    text-align: center;
+    margin: 15px 0;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.info-item {
+    background: #f8f9ff;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #e1e5e9;
+}
+
+.info-label {
+    font-size: 11px;
+    color: #666;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.info-value {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+.timer {
+    text-align: center;
+    padding: 20px;
+    background: #fff3cd;
+    border-radius: 10px;
+    border: 1px solid #ffeaa7;
+}
+
+.timer-text {
+    font-size: 14px;
+    color: #856404;
+    margin-bottom: 10px;
+}
+
+.timer-countdown {
+    font-size: 24px;
+    font-weight: bold;
+    color: #dc3545;
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 5px;
+    }
+
+    .container {
+        grid-template-columns: 1fr;
+        max-width: 100%;
+        min-height: calc(100vh - 10px);
+        border-radius: 15px;
+        margin: 0;
+    }
+
+    .input-section, .output-section {
+        padding: 20px 15px;
+        border-left: none;
+    }
+
+    .output-section {
+        border-top: 3px solid #667eea;
+    }
+
+    .section-title {
+        font-size: 18px;
+        margin-bottom: 12px;
+    }
+
+    .input-icon, .output-icon {
+        width: 25px;
+        height: 25px;
+        font-size: 12px;
+    }
+
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .queue-number {
+        font-size: 28px;
+        margin: 10px 0;
+    }
+
+    .timer {
+        padding: 15px;
+        margin-top: 15px;
+    }
+
+    .timer-countdown {
+        font-size: 20px;
+    }
+
+    input[type="text"], input[type="tel"] {
+        padding: 14px 12px;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+
+    .submit-btn {
+        padding: 14px;
+        font-size: 16px;
+    }
+
+    .status-message {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        border-radius: 10px;
+    }
+
+    .input-section, .output-section {
+        padding: 15px 12px;
+    }
+
+    .section-title {
+        font-size: 16px;
+        gap: 6px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .queue-number {
+        font-size: 24px;
+    }
+
+    .info-item {
+        padding: 10px;
+    }
+
+    .info-label {
+        font-size: 10px;
+    }
+
+    .info-value {
+        font-size: 13px;
+    }
+}
+
+/* Fix for mobile viewport */
+@media screen and (max-height: 600px) {
+    .container {
+        min-height: auto;
+    }
+
+    .input-section, .output-section {
+        min-height: auto;
+    }
+}
+
+/* Prevent horizontal scroll on mobile */
+@media (max-width: 768px) {
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+    }
+}
+
+</style >

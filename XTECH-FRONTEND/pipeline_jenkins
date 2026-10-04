@@ -1,0 +1,50 @@
+pipeline{
+    agent any 
+    stages{
+        stage('Cloning'){
+            steps{
+                git credentialsId: 'x-tech', url: 'https://github.com/xtechvn/frontend-company-xtech.git', branch: 'main'
+            }
+        }
+        stage('Restore Packages'){
+            steps{
+                bat 'dotnet restore .\\XTECH-FRONTEND\\XTECH-FRONTEND.csproj'
+            }
+        }
+        stage('Clean'){
+            steps{
+                bat 'dotnet clean .\\XTECH-FRONTEND\\XTECH-FRONTEND.csproj --configuration Release'
+            }
+        }
+        stage('Build'){
+            steps{
+                bat 'dotnet build .\\XTECH-FRONTEND\\XTECH-FRONTEND.csproj --configuration Release'
+            }
+        }
+        stage('Publish'){
+            steps{
+                bat 'dotnet publish .\\XTECH-FRONTEND\\XTECH-FRONTEND.csproj'
+            }
+        }
+        stage('Stop Service'){
+            steps{
+                bat '%windir%\\system32\\inetsrv\\appcmd stop sites Xtech.FE'
+                bat 'del C:\\XTech\\FRONTEND\\web.config'
+                bat 'xcopy .\\XTECH-FRONTEND\\bin\\Debug\\net6.0\\web.config C:\\XTech\\FRONTEND /e /y /i /r'
+                //bat '%windir%\\system32\\inetsrv\\appcmd stop apppool /apppool.name:xtech.fe'
+            }
+        }
+       
+        stage('copy to host website folder'){
+            steps{
+                bat 'xcopy .\\XTECH-FRONTEND\\bin\\Debug\\net6.0\\publish C:\\XTech\\FRONTEND /e /y /i /r'
+            }
+        }
+        stage('start service'){
+            steps{
+                bat '%windir%\\system32\\inetsrv\\appcmd start sites Xtech.FE'
+                //bat '%windir%\\system32\\inetsrv\\appcmd start apppool /apppool.name:xtech.fe'
+            }
+        }
+    }
+}

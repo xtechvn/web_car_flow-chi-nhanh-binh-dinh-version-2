@@ -1,0 +1,108 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>XTECH_FRONTEND</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="wwwroot\lib\**" />
+    <Compile Remove="wwwroot\modules\shared\**" />
+    <Content Remove="wwwroot\lib\**" />
+    <Content Remove="wwwroot\modules\shared\**" />
+    <EmbeddedResource Remove="wwwroot\lib\**" />
+    <EmbeddedResource Remove="wwwroot\modules\shared\**" />
+    <None Remove="wwwroot\lib\**" />
+    <None Remove="wwwroot\modules\shared\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="wwwroot\css\fontAwesome\fonts\fontawesome-webfont.svg" />
+    <None Include="wwwroot\css\fontAwesome\fonts\fontawesome-webfont.woff2" />
+    <None Include="wwwroot\css\fonts\icomoon.svg" />
+    <None Include="wwwroot\css\fonts\iconfont\iconfont.woff2" />
+    <None Include="wwwroot\css\fonts\SFProDisplay\SFProDisplay-Bold.svg" />
+    <None Include="wwwroot\css\fonts\SFProDisplay\SFProDisplay-Bold.woff2" />
+    <None Include="wwwroot\css\fonts\SFProDisplay\SFProDisplay-Medium.svg" />
+    <None Include="wwwroot\css\fonts\SFProDisplay\SFProDisplay-Medium.woff2" />
+    <None Include="wwwroot\css\fonts\SFProDisplay\SFProDisplay-Regular.svg" />
+    <None Include="wwwroot\css\fonts\SFProDisplay\SFProDisplay-Regular.woff2" />
+    <None Include="wwwroot\css\fonts\SFProDisplay\SFProDisplay-Semibold.svg" />
+    <None Include="wwwroot\css\fonts\SFProDisplay\SFProDisplay-Semibold.woff2" />
+    <None Include="wwwroot\css\maps\demo.css.map" />
+    <None Include="wwwroot\css\maps\detail.css.map" />
+    <None Include="wwwroot\css\maps\style.css.map" />
+    <None Include="wwwroot\css\scss\detail.scss" />
+    <None Include="wwwroot\css\scss\style.scss" />
+    <None Include="wwwroot\css\scss\_animation.scss" />
+    <None Include="wwwroot\css\scss\_aos.scss" />
+    <None Include="wwwroot\css\scss\_common.scss" />
+    <None Include="wwwroot\css\scss\_datepicker.min.scss" />
+    <None Include="wwwroot\css\scss\_element.scss" />
+    <None Include="wwwroot\css\scss\_font.scss" />
+    <None Include="wwwroot\css\scss\_footer.scss" />
+    <None Include="wwwroot\css\scss\_header.scss" />
+    <None Include="wwwroot\css\scss\_modal.scss" />
+    <None Include="wwwroot\css\scss\_placeholder.scss" />
+    <None Include="wwwroot\css\scss\_reset.scss" />
+    <None Include="wwwroot\css\scss\_responsive.scss" />
+    <None Include="wwwroot\css\scss\_scrollbar.scss" />
+    <None Include="wwwroot\css\scss\_slider-range.scss" />
+    <None Include="wwwroot\css\scss\_swiper.scss" />
+    <None Include="wwwroot\css\scss\_var.scss" />
+    <None Include="wwwroot\images\graphics\logo-white.svg" />
+    <None Include="wwwroot\images\graphics\logo.svg" />
+    <None Include="wwwroot\images\icons\icon.svg" />
+    <None Include="wwwroot\images\symbols\elements\Analytics.svg" />
+    <None Include="wwwroot\images\symbols\elements\cancel.svg" />
+    <None Include="wwwroot\images\symbols\elements\checkmark.svg" />
+    <None Include="wwwroot\images\symbols\elements\close.svg" />
+    <None Include="wwwroot\images\symbols\elements\cloud.svg" />
+    <None Include="wwwroot\images\symbols\elements\data.svg" />
+    <None Include="wwwroot\images\symbols\elements\date.svg" />
+    <None Include="wwwroot\images\symbols\elements\Development.svg" />
+    <None Include="wwwroot\images\symbols\elements\group.svg" />
+    <None Include="wwwroot\images\symbols\elements\info.svg" />
+    <None Include="wwwroot\images\symbols\elements\lang.svg" />
+    <None Include="wwwroot\images\symbols\elements\person.svg" />
+    <None Include="wwwroot\images\symbols\elements\search.svg" />
+    <None Include="wwwroot\images\symbols\elements\seo.svg" />
+    <None Include="wwwroot\images\symbols\elements\Service.svg" />
+    <None Include="wwwroot\images\symbols\elements\source.svg" />
+    <None Include="wwwroot\js\aos.js" />
+    <None Include="wwwroot\js\bootstrap.bundle.min.js" />
+    <None Include="wwwroot\js\bootstrap.min.js" />
+    <None Include="wwwroot\js\common.js" />
+    <None Include="wwwroot\js\daterangepicker.min.js" />
+    <None Include="wwwroot\js\jquery-2.1.4.min.js" />
+    <None Include="wwwroot\js\jquery.magnific-popup.min.js" />
+    <None Include="wwwroot\js\jquery.scrollbar.min.js" />
+    <None Include="wwwroot\js\lightgallery-all.min.js" />
+    <None Include="wwwroot\js\moment.min.js" />
+    <None Include="wwwroot\js\numscroller-1.0.js" />
+    <None Include="wwwroot\js\owl.carousel.min.js" />
+    <None Include="wwwroot\js\popper.min.js" />
+    <None Include="wwwroot\js\range-holder.js" />
+    <None Include="wwwroot\js\slider-range.js" />
+    <None Include="wwwroot\js\stickyfill.min.js" />
+    <None Include="wwwroot\js\svgxuse.js" />
+    <None Include="wwwroot\js\swiper.min.js" />
+    <None Include="wwwroot\js\zebra_datepicker.min.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Apis.Sheets.v4" Version="1.70.0.3819" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.1.34" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.6" />
+    <PackageReference Include="MongoDB.Bson" Version="3.4.3" />
+    <PackageReference Include="MongoDB.Driver" Version="3.4.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="RabbitMQ.Client" Version="6.0.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.7.33" />
+    <PackageReference Include="System.Runtime.Caching" Version="8.0.0" />
+    <PackageReference Include="Telegram.Bot" Version="19.0.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,316 @@
+﻿@{
+    ViewData["Title"] = "Quản lý người dùng";
+}
+<head>
+    <link href="~/lib/magnific-popup/magnific-popup.css" rel="stylesheet" />
+</head>
+<main class="main-section">
+
+
+    <div class="table-head">
+        <a href="/" class="btn-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#344054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+        </a>
+        <h2 class="table-title">Quản lý người dùng</h2>
+        <div class="table-search">
+            <input type="text" id="ip-kup-search-user" placeholder="Tìm kiếm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M13.3538 12.6464L10.2244 9.51764C11.1314 8.42871 11.5837 7.03201 11.4872 5.6181C11.3906 4.20419 10.7527 2.88193 9.70609 1.92637C8.65949 0.970822 7.28478 0.455551 5.86795 0.487751C4.45111 0.519951 3.10123 1.09714 2.09912 2.09926C1.09701 3.10137 0.519814 4.45125 0.487614 5.86808C0.455414 7.28492 0.970685 8.65963 1.92624 9.70623C2.88179 10.7528 4.20405 11.3908 5.61796 11.4873C7.03187 11.5838 8.42857 11.1315 9.51751 10.2245L12.6463 13.3539C12.6927 13.4003 12.7479 13.4372 12.8086 13.4623C12.8693 13.4875 12.9343 13.5004 13 13.5004C13.0657 13.5004 13.1308 13.4875 13.1915 13.4623C13.2522 13.4372 13.3073 13.4003 13.3538 13.3539C13.4002 13.3074 13.4371 13.2523 13.4622 13.1916C13.4873 13.1309 13.5003 13.0658 13.5003 13.0001C13.5003 12.9344 13.4873 12.8694 13.4622 12.8087C13.4371 12.748 13.4002 12.6928 13.3538 12.6464ZM1.50001 6.00014C1.50001 5.11013 1.76393 4.2401 2.25839 3.50008C2.75286 2.76006 3.45566 2.18328 4.27793 1.84268C5.1002 1.50209 6.005 1.41298 6.87791 1.58661C7.75083 1.76024 8.55265 2.18883 9.18199 2.81816C9.81132 3.4475 10.2399 4.24932 10.4135 5.12224C10.5872 5.99515 10.4981 6.89995 10.1575 7.72222C9.81687 8.54449 9.24009 9.24729 8.50007 9.74176C7.76005 10.2362 6.89002 10.5001 6.00001 10.5001C4.80694 10.4988 3.66311 10.0243 2.81949 9.18066C1.97586 8.33704 1.50133 7.19321 1.50001 6.00014Z" fill="#638C1C"></path>
+            </svg>
+            <button class="btn" onclick="_user.OnOpenCreateForm()" ><span class="plus">✕</span> Thêm mới</button>
+        </div>
+    </div>
+@*    <div class="dropdown-modern"> *@
+@*     <label class="label">Trạng thái</label> *@
+
+@*     <div class="status-dropdown"> *@
+@*         <button class="dropdown-toggle" data-options='[ *@
+@*       {"text":"Tất cả","class":"status-all"}, *@
+@*       {"text":"Đang hoạt động","class":"status-active"}, *@
+@*       {"text":"Ngừng hoạt động","class":"status-close"} *@
+@*     ]'>Tất cả</button> *@
+@*     </div> *@
+@* </div> *@
+
+   
+    
+    <div id="magnific-popup-small" class="popup-form  white-popup mfp-hide">
+        <div class="round_lighbox">
+            <div class="content_lightbox">
+                <div class="title-popup" id="Data_Tile"></div>
+                <div class="form-user-modern  magnific-body" id="Data_Body">
+                    <!--<div class="form-grid">-->
+                        <!-- Họ tên -->
+                        <!--<div class="form-group">
+                            <label>Họ tên <span>*</span></label>
+                            <input type="text" placeholder="Vui lòng nhập">
+                        </div>-->
+
+                        <!-- Ngày sinh -->
+                        <!--<div class="form-group">
+                            <label>Ngày sinh <span>*</span></label>
+                            <input type="date" value="2025-12-22">
+                        </div>-->
+
+                        <!-- Số điện thoại -->
+                        <!--<div class="form-group">
+                            <label>Số điện thoại <span>*</span></label>
+                            <input type="text" placeholder="Label">
+                        </div>-->
+
+                        <!-- Email -->
+                        <!--<div class="form-group">
+                            <label>Email <span>*</span></label>
+                            <input type="email" placeholder="Label">
+                        </div>-->
+
+                        <!-- Tên đăng nhập -->
+                        <!--<div class="form-group">
+                            <label>Tên đăng nhập <span>*</span></label>
+                            <input type="text" placeholder="Label">
+                        </div>-->
+
+                        <!-- Trạng thái -->
+                        <!--<div class="form-group">
+                            <label>Trạng thái </label>
+                            <select>
+                                <option value="0">Kích hoạt</option>
+                                <option value="1">Tạm ngưng</option>
+                            </select>
+                        </div>-->
+                        <!-- Mật khẩu -->
+                        <!--<div class="form-group">
+                            <label>Mật khẩu <span>*</span></label>
+                            <input type="password" placeholder="Label">
+                        </div>-->
+
+                        <!-- Nhập lại mật khẩu -->
+                        <!--<div class="form-group">
+                            <label>Nhập lại mật khẩu <span>*</span></label>
+                            <input type="password" placeholder="Label">
+                        </div>-->
+
+                        <!-- Vai trò -->
+                        <!--<div class="form-group">
+                            <label>Vai trò <span>*</span></label>
+                            <select>
+                                <option>Chọn vai trò</option>
+                            </select>
+                        </div>-->
+
+                        <!-- Phòng ban -->
+                        <!--<div class="form-group">
+                            <label>Phòng ban <span>*</span></label>
+                            <select>
+                                <option>Chọn phòng ban</option>
+                                <option>Chọn phòng ban 2</option>
+                                <option>Chọn phòng ban 3</option>
+                            </select>
+                        </div>-->
+
+                        <!-- Chức vụ -->
+                        <!--<div class="form-group">
+                            <label>Chức vụ <span>*</span></label>
+                            <select>
+                                <option>Chọn chức vụ</option>
+                            </select>
+                        </div>-->
+
+                        <!-- Ghi chú -->
+                        <!--<div class="form-group">
+                            <label>Ghi chú</label>
+                            <input type="text" placeholder="Vui lòng nhập">
+                        </div>
+                    </div>-->
+                </div>
+
+            </div>
+            @*<div class="actions">
+                <button class="cancel">Bỏ qua</button>
+                <button class="confirm">Xác nhận</button>
+            </div>*@
+        </div>
+    </div>
+    <div class="table-wrapper simple-scrollbar ss-container" style="height: 310px;">
+        <div class="ss-wrapper">
+            <div class="ss-content" id="grid-data">
+
+            </div>
+        </div><div class="ss-scroll ss-hidden"></div>
+    </div>
+
+    <div id="dropdown-container"></div>
+
+</main>
+@section scripts {
+    <script src="~/modules/user.js?v=2" asp-append-version="true"></script>
+    @* <script src="~/modules/user.js?v=2" asp-append-version="true"></script> *@
+    @* <script> *@
+    @*             $('.open-popup-link').magnificPopup({ *@
+    @*                 type: 'inline', *@
+    @*                 midClick: true, // Allow opening popup on middle mouse click. Always set it to true if you don't provide alternative source in href. *@
+    @*                 mainClass: 'mfp-with-zoom', *@
+    @*                 fixedContentPos: false, *@
+    @*                 fixedBgPos: true, *@
+    @*                 overflowY: 'auto', *@
+    @*                 closeBtnInside: true, *@
+    @*                 preloader: false, *@
+    @*                 removalDelay: 300, *@
+    @*             }); *@
+
+    @*            // js dropdown (cải tiến: tọa độ viewport + đo kích thước chính xác + đóng khi scroll) *@
+    @*     $(function () { *@
+    @*         const container = $('<div id="dropdown-container"></div>').appendTo('body'); *@
+    @*         let $menu = null; *@
+    @*         let $currentBtn = null; *@
+
+    @*         $(document).on('click', '.status-dropdown .dropdown-toggle', function (e) { *@
+    @*             e.stopPropagation(); *@
+    @*             const $btn = $(this); *@
+    @*             const optsData = $btn.data('options'); // mảng [{text, class}] *@
+    @*             const options = Array.isArray(optsData) ? optsData : JSON.parse(optsData); *@
+    @*             const currentText = $.trim($btn.text()); *@
+
+    @*             // Đóng menu cũ (nếu có) *@
+    @*             if ($menu) { *@
+    @*                 $menu.remove(); *@
+    @*                 $menu = null; *@
+    @*             } *@
+
+    @*             $currentBtn = $btn; *@
+
+    @*             // Tạo menu + danh sách li *@
+    @*             $menu = $('<div class="dropdown-menu"><ul></ul></div>'); *@
+    @*             const $ul = $menu.find('ul'); *@
+
+    @*             options.forEach(opt => { *@
+    @*                 $('<li>') *@
+    @*                     .text(opt.text) *@
+    @*                     .addClass(opt.class) *@
+    @*                     .toggleClass('active', opt.text === currentText) *@
+    @*                     .appendTo($ul); *@
+    @*             }); *@
+
+    @*             const $actions = $('<div class="actions"></div>'); *@
+    @*             $('<button class="cancel">Bỏ qua</button>').appendTo($actions); *@
+    @*             $('<button class="confirm">Xác nhận</button>').appendTo($actions); *@
+    @*             $menu.append($actions); *@
+    @*             container.append($menu); *@
+
+    @*             // --- 🔧 Tính toán vị trí dropdown (dùng viewport coords) --- *@
+    @*             const rect = $btn[0].getBoundingClientRect(); // viewport coordinates *@
+    @*             const btnHeight = rect.height; *@
+    @*             const winWidth = $(window).width(); *@
+    @*             const winHeight = $(window).height(); *@
+    @*             const paddingScreen = 15; // chừa khoảng 15px mỗi bên *@
+
+    @*             // Nếu cần dropdown có width theo wrapper .dropdown-modern (nếu tồn tại), *@
+    @*             // bạn có thể bỏ comment đoạn sau (mình giữ commented để KHÔNG thay đổi hành vi cũ). *@
+    @*             // const $modern = $btn.closest('.dropdown-modern'); *@
+    @*             // if ($modern.length) { *@
+    @*             //     $menu.css('width', $modern.outerWidth()); *@
+    @*             // } *@
+
+    @*             // Để đo chính xác kích thước (menu có thể đang display:none trong CSS), *@
+    @*             // ta tạm hiện menu nhưng ẩn bằng visibility để không gây flicker. *@
+    @*             $menu.css({ *@
+    @*                 position: 'absolute', *@
+    @*                 left: 0, *@
+    @*                 top: 0, *@
+    @*                 display: 'block', *@
+    @*                 visibility: 'hidden' *@
+    @*             }); *@
+
+    @*             const menuWidth = $menu.outerWidth(); *@
+    @*             const menuHeight = $menu.outerHeight(); *@
+
+    @*             // Vị trí mặc định: bên dưới button (viewport coords) *@
+    @*             let left = rect.left; *@
+    @*             let top = rect.top + btnHeight; *@
+
+    @*             // Nếu dropdown tràn phải -> dịch sang trái *@
+    @*             if (left + menuWidth + paddingScreen > winWidth) { *@
+    @*                 left = winWidth - menuWidth - paddingScreen; *@
+    @*             } *@
+
+    @*             // Nếu tràn trái -> giữ cách paddingScreen *@
+    @*             if (left < paddingScreen) { *@
+    @*                 left = paddingScreen; *@
+    @*             } *@
+
+    @*             // Nếu tràn dưới -> bật drop-up (hiển thị phía trên button) *@
+    @*             if (top + menuHeight > winHeight) { *@
+    @*                 top = rect.top - menuHeight; *@
+    @*                 $menu.addClass('drop-up'); *@
+    @*             } else { *@
+    @*                 $menu.removeClass('drop-up'); *@
+    @*             } *@
+
+    @*             // Áp vị trí cuối cùng và hiển thị menu *@
+    @*             $menu.css({ *@
+    @*                 left: left, *@
+    @*                 top: top, *@
+    @*                 visibility: 'visible' // hiện lên *@
+    @*             }); *@
+    @*         }); *@
+
+    @*         // Click chọn item *@
+    @*         $(document).on('click', '#dropdown-container .dropdown-menu li', function (e) { *@
+    @*             e.stopPropagation(); *@
+    @*             $('#dropdown-container .dropdown-menu li').removeClass('active'); *@
+    @*             $(this).addClass('active'); *@
+    @*         }); *@
+
+    @*         // Bỏ qua *@
+    @*         $(document).on('click', '#dropdown-container .actions .cancel', function (e) { *@
+    @*             e.stopPropagation(); *@
+    @*             closeMenu(); *@
+    @*         }); *@
+
+    @*         // ✅ Xác nhận – đổi text + class cho button *@
+    @*         $(document).on('click', '#dropdown-container .actions .confirm', function (e) { *@
+    @*             e.stopPropagation(); *@
+    @*             if ($menu && $currentBtn) { *@
+    @*                 const $active = $menu.find('li.active'); *@
+    @*                 if ($active.length) { *@
+    @*                     const text = $active.text(); *@
+    @*                     const cls = $active.attr('class').split(/\s+/) *@
+    @*                         .filter(c => c !== 'active')[0] || ''; *@
+
+    @*                     $currentBtn *@
+    @*                         .text(text) *@
+    @*                         .removeClass(function (_, old) { *@
+    @*                             return (old.match(/(^|\s)status-\S+/g) || []).join(' '); *@
+    @*                         }) *@
+    @*                         .addClass(cls); *@
+    @*                 } *@
+    @*             } *@
+    @*             closeMenu(); *@
+    @*         }); *@
+
+    @*         // Đóng menu khi click ra ngoài *@
+    @*         $(document).on('click', function () { *@
+    @*             closeMenu(); *@
+    @*         }); *@
+
+    @*         // Đóng dropdown khi scroll (nếu muốn mượt hơn, có thể debounce) *@
+    @*         $(window).on('scroll', function () { *@
+    @*             if ($menu) { *@
+    @*                 closeMenu(); *@
+    @*             } *@
+    @*         }); *@
+
+    @*         function closeMenu() { *@
+    @*             if ($menu) { *@
+    @*                 $menu.remove(); *@
+    @*                 $menu = null; *@
+    @*                 $currentBtn = null; *@
+    @*             } *@
+    @*         } *@
+    @*     }); *@
+
+    @* </script> *@
+
+}

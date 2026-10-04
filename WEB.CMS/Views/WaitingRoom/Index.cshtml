@@ -1,0 +1,201 @@
+
+<style>
+    .waiting-room-page {
+        min-height: 0;
+    }
+
+    .waiting-room-page .table-wrapper {
+        max-height: none;
+        margin-bottom: 0;
+        overflow: auto;
+    }
+
+    .waiting-room-page .table-wrapper,
+    .waiting-room-page .data-table,
+    .waiting-room-page .data-table th,
+    .waiting-room-page .data-table td {
+        background: #FFC107 !important;
+        color: #000 !important;
+    }
+
+    .waiting-room-page .table-wrapper {
+        border-color: #E0A800;
+    }
+
+    .waiting-room-page .data-table td {
+        border-top-color: rgba(0, 0, 0, 0.12);
+    }
+
+    .waiting-room-page .data-table th {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+    }
+
+    .waiting-room-page .table-tools {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    /* Cỡ chữ người dùng chọn: 1 = mặc định, 2 và 3 tăng dần */
+    .waiting-room-page { --wr-font-scale: 1; }
+    .waiting-room-page.font-size-2 { --wr-font-scale: 1.3; }
+    .waiting-room-page.font-size-3 { --wr-font-scale: 1.6; }
+
+    .waiting-room-page .data-table {
+        font-size: calc(11px * var(--wr-font-scale)) !important;
+    }
+
+    .font-size-picker {
+        display: inline-flex;
+        align-items: center;
+        height: 36px;
+        border: 1px solid #D0D5DD;
+        border-radius: 6px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .font-size-picker button {
+        display: inline-flex;
+        align-items: flex-end;
+        justify-content: center;
+        min-width: 36px;
+        height: 100%;
+        padding: 0 8px 8px;
+        border: 0;
+        border-left: 1px solid #D0D5DD;
+        background: transparent;
+        color: #344054;
+        font-weight: 600;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .font-size-picker button:first-child {
+        border-left: 0;
+    }
+
+    .font-size-picker button[data-size="1"] { font-size: 12px; }
+    .font-size-picker button[data-size="2"] { font-size: 15px; }
+    .font-size-picker button[data-size="3"] { font-size: 18px; }
+
+    .font-size-picker button.active {
+        background: #638C1C;
+        color: #fff;
+    }
+
+    .btn-fullscreen {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border: 1px solid #D0D5DD;
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+    }
+
+    .btn-fullscreen .icon-exit {
+        display: none;
+    }
+
+    /* Chế độ trình chiếu TV: bảng phủ kín cửa sổ, chữ to để nhìn từ xa */
+    .waiting-room-page.is-presenting {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        margin: 0;
+        padding: 12px 16px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .waiting-room-page.is-presenting .btn-back,
+    .waiting-room-page.is-presenting .table-search {
+        display: none;
+    }
+
+    .waiting-room-page.is-presenting .table-head {
+        margin-bottom: 10px;
+    }
+
+    .waiting-room-page.is-presenting .table-title {
+        font-size: clamp(20px, 2vw, 40px);
+    }
+
+    .waiting-room-page.is-presenting .btn-fullscreen .icon-enter {
+        display: none;
+    }
+
+    .waiting-room-page.is-presenting .btn-fullscreen .icon-exit {
+        display: block;
+    }
+
+    .waiting-room-page.is-presenting .data-table {
+        font-size: calc(clamp(14px, 1.35vw, 28px) * var(--wr-font-scale)) !important;
+    }
+
+    .waiting-room-page.is-presenting .data-table th,
+    .waiting-room-page.is-presenting .data-table td {
+        padding: clamp(6px, 0.7vw, 14px) clamp(8px, 0.8vw, 16px);
+        line-height: 1.35;
+    }
+
+    .waiting-room-page.is-presenting .data-table td {
+        font-weight: 600;
+    }
+</style>
+<main class="main-section waiting-room-page">
+
+    <div class="table-head">
+        <a href="/" class="btn-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke="#344054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+        </a>
+        <h2 class="table-title">Danh sách xe đang chờ xử lý</h2>
+        <div class="table-tools">
+            <div class="table-search">
+                <input type="text" id="input_Processing_Is_Loading_Chua_SL" placeholder="Tìm kiếm">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M13.3538 12.6464L10.2244 9.51764C11.1314 8.42871 11.5837 7.03201 11.4872 5.6181C11.3906 4.20419 10.7527 2.88193 9.70609 1.92637C8.65949 0.970822 7.28478 0.455551 5.86795 0.487751C4.45111 0.519951 3.10123 1.09714 2.09912 2.09926C1.09701 3.10137 0.519814 4.45125 0.487614 5.86808C0.455414 7.28492 0.970685 8.65963 1.92624 9.70623C2.88179 10.7528 4.20405 11.3908 5.61796 11.4873C7.03187 11.5838 8.42857 11.1315 9.51751 10.2245L12.6463 13.3539C12.6927 13.4003 12.7479 13.4372 12.8086 13.4623C12.8693 13.4875 12.9343 13.5004 13 13.5004C13.0657 13.5004 13.1308 13.4875 13.1915 13.4623C13.2522 13.4372 13.3073 13.4003 13.3538 13.3539C13.4002 13.3074 13.4371 13.2523 13.4622 13.1916C13.4873 13.1309 13.5003 13.0658 13.5003 13.0001C13.5003 12.9344 13.4873 12.8694 13.4622 12.8087C13.4371 12.748 13.4002 12.6928 13.3538 12.6464ZM1.50001 6.00014C1.50001 5.11013 1.76393 4.2401 2.25839 3.50008C2.75286 2.76006 3.45566 2.18328 4.27793 1.84268C5.1002 1.50209 6.005 1.41298 6.87791 1.58661C7.75083 1.76024 8.55265 2.18883 9.18199 2.81816C9.81132 3.4475 10.2399 4.24932 10.4135 5.12224C10.5872 5.99515 10.4981 6.89995 10.1575 7.72222C9.81687 8.54449 9.24009 9.24729 8.50007 9.74176C7.76005 10.2362 6.89002 10.5001 6.00001 10.5001C4.80694 10.4988 3.66311 10.0243 2.81949 9.18066C1.97586 8.33704 1.50133 7.19321 1.50001 6.00014Z" fill="#638C1C"></path>
+                </svg>
+            </div>
+            <div class="font-size-picker" id="font_size_picker" role="group" aria-label="Cỡ chữ">
+                <button type="button" data-size="1" title="Cỡ chữ mặc định">A</button>
+                <button type="button" data-size="2" title="Cỡ chữ lớn">A</button>
+                <button type="button" data-size="3" title="Cỡ chữ rất lớn">A</button>
+            </div>
+            <button type="button" id="btn_fullscreen" class="btn-fullscreen" title="Chiếu toàn màn hình">
+                <svg class="icon-enter" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" stroke="#344054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                <svg class="icon-exit" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none">
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3" stroke="#344054" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div id="magnific-popup-small" class="popup-form white-popup mfp-hide">
+        <div class="round_lighbox">
+            <div class="content_lightbox">
+                <div class="title-popup magnific-title" id="Data_Tile"></div>
+                <div class="form-user-modern magnific-body" id="Data_Body"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="waiting_room_table" class="table-wrapper">
+        <div id="Processing_Is_Loading"></div>
+    </div>
+
+</main>
+@section scripts {
+    <script src="~/modules/waitingroom.js?v=2625" asp-append-version="true"></script>
+}
