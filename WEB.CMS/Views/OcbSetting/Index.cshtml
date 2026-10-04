@@ -1,0 +1,510 @@
+@{
+    ViewData["Title"] = "Cấu hình OBD";
+    var rows = new[]
+    {
+        new { Delivery = "83163170", LoadingDate = "22/06/2026", ShipTo = "1000215732", ShipToName = "CÔNG TY TNHH MINH HẢI", Material = "1075948888", Description = "2202S 25KG GÀ THỊT TỪ 11-21 NT", Batch = "0001624030", TotalWeight = "100.880", NetWeight = "100.000" },
+        new { Delivery = "83163171", LoadingDate = "22/06/2026", ShipTo = "1000215733", ShipToName = "CÔNG TY TNHH HÒA PHÁT", Material = "1075949190", Description = "3402 25KG GÀ ĐẺ TRỨNG TỪ 18 TUẦN TUỔI", Batch = "0001629770", TotalWeight = "376.230", NetWeight = "375.000" },
+        new { Delivery = "83163172", LoadingDate = "22/06/2026", ShipTo = "1000215734", ShipToName = "HỢP TÁC XÃ CHĂN NUÔI AN PHÁT", Material = "1075968649", Description = "5101NT 25KG GÀ THỊT TỪ 1-21 NGÀY", Batch = "0001634148", TotalWeight = "125.465", NetWeight = "125.000" },
+        new { Delivery = "83163173", LoadingDate = "22/06/2026", ShipTo = "1000215735", ShipToName = "TRANG TRẠI CHĂN NUÔI BẢO AN", Material = "1075939421", Description = "5202NT 25KG GÀ THỊT 22 NGÀY - XC", Batch = "0001634136", TotalWeight = "376.245", NetWeight = "375.000" },
+        new { Delivery = "83163174", LoadingDate = "22/06/2026", ShipTo = "1000215736", ShipToName = "CÔNG TY CP CHĂN NUÔI THIÊN LONG", Material = "1300670883", Description = "BEEF622 25KG BÒ THỊT VỖ BÉO BÒ LAI SIND", Batch = "0001645166", TotalWeight = "2.257.470", NetWeight = "2.250.000" },
+        new { Delivery = "83163175", LoadingDate = "22/06/2026", ShipTo = "1000215737", ShipToName = "HỢP TÁC XÃ NÔNG NGHIỆP TÂN TIẾN", Material = "1075938558", Description = "8002 25KG HEO CON TỪ 8-15KG", Batch = "0001636277", TotalWeight = "250.830", NetWeight = "250.000" },
+        new { Delivery = "83163176", LoadingDate = "22/06/2026", ShipTo = "1000215738", ShipToName = "TRANG TRẠI CHĂN NUÔI ĐẠI THÀNH", Material = "1075986829", Description = "9032 25KG HEO TỪ 15-25KG", Batch = "0001637216", TotalWeight = "2.008.560", NetWeight = "2.000.000" },
+        new { Delivery = "83163177", LoadingDate = "22/06/2026", ShipTo = "1000215739", ShipToName = "CÔNG TY TNHH NÔNG NGHIỆP PHÚC LỘC", Material = "1075939070", Description = "9102 25KG HEO THỊT TỪ 20-50KG", Batch = "0001639890", TotalWeight = "752.490", NetWeight = "750.000" },
+    };
+    var stt = 1;
+}
+<style>
+    .obd-page {
+        --obd-primary: #3b8a2f;
+        --obd-primary-light: #e8f3e6;
+        --obd-orange: #f07c2a;
+        --obd-orange-light: #fdeee2;
+        --obd-border: #e5e7eb;
+        --obd-text: #111827;
+        --obd-muted: #6b7280;
+        background: #fff;
+    }
+
+    .obd-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 12px;
+    }
+
+    .obd-head__title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .obd-head__icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 8px;
+        background: var(--obd-primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .obd-head__title h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--obd-text);
+    }
+
+    .obd-head__title p {
+        margin: 2px 0 0;
+        font-size: 11px;
+        color: var(--obd-muted);
+    }
+
+    .obd-head__actions {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .obd-search {
+        position: relative;
+    }
+
+    .obd-search input {
+        width: 234px;
+        height: 28px;
+        padding: 0 10px 0 28px;
+        border: 1px solid #d1d5db;
+        border-radius: 5px;
+        font-size: 10px;
+    }
+
+    .obd-search svg {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .obd-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 28px;
+        padding: 0 14px;
+        border: 1px solid transparent;
+        border-radius: 5px;
+        font-size: 11px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .obd-btn--primary {
+        background: var(--obd-primary);
+        color: #fff;
+        padding: 0 20px;
+    }
+
+    .obd-btn--primary:hover {
+        opacity: .9;
+    }
+
+    .obd-btn--outline {
+        background: #fff;
+        border-color: #d1d5db;
+        color: var(--obd-text);
+        font-weight: 500;
+    }
+
+    .obd-btn--outline:hover {
+        background: #f9fafb;
+    }
+
+    .obd-filter {
+        display: flex;
+        align-items: flex-end;
+        gap: 22px;
+        padding: 10px 12px 12px;
+        border: 1px solid var(--obd-border);
+        border-radius: 6px;
+        background: #f9fafb;
+        margin-bottom: 10px;
+    }
+
+    .obd-filter__item label {
+        display: block;
+        font-size: 10px;
+        color: var(--obd-text);
+        margin-bottom: 5px;
+    }
+
+    .obd-filter__item select {
+        width: 168px;
+        height: 28px;
+        padding: 0 26px 0 9px;
+        border: 1px solid #d1d5db;
+        border-radius: 5px;
+        font-size: 10px;
+        background: #fff url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%23374151" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 10px center;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        cursor: pointer;
+    }
+
+    .obd-filter .obd-btn--outline {
+        margin-left: auto;
+        align-self: center;
+    }
+
+    .obd-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin-bottom: 12px;
+    }
+
+    .obd-stat {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px;
+        border: 1px solid var(--obd-border);
+        border-radius: 6px;
+    }
+
+    .obd-stat--total, .obd-stat--active {
+        background: #f7fbf6;
+    }
+
+    .obd-stat--paused {
+        background: #fffaf6;
+    }
+
+    .obd-stat__icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .obd-stat--total .obd-stat__icon, .obd-stat--active .obd-stat__icon {
+        background: var(--obd-primary-light);
+    }
+
+    .obd-stat--paused .obd-stat__icon {
+        background: var(--obd-orange-light);
+    }
+
+    .obd-stat__label {
+        font-size: 10px;
+        color: var(--obd-text);
+    }
+
+    .obd-stat__value {
+        font-size: 18px;
+        font-weight: 700;
+        line-height: 1.3;
+        color: var(--obd-primary);
+    }
+
+    .obd-stat--paused .obd-stat__value {
+        color: var(--obd-orange);
+    }
+
+    .obd-stat__unit {
+        font-size: 9px;
+        color: var(--obd-muted);
+    }
+
+    .obd-table {
+        border: 1px solid var(--obd-border);
+        border-radius: 6px;
+        overflow-x: auto;
+    }
+
+    .obd-table .data-table th {
+        background: #f9fafb;
+        color: var(--obd-text);
+        font-weight: 600;
+        padding: 9px 8px;
+        text-align: center;
+    }
+
+    .obd-table .data-table td {
+        padding: 9px 8px;
+        text-align: center;
+        color: var(--obd-text);
+    }
+
+    .obd-table .data-table td.text-left {
+        text-align: left;
+    }
+
+    .obd-table .data-table td.text-right {
+        text-align: right;
+    }
+
+    .obd-table .data-table td.fw-600 {
+        font-weight: 600;
+    }
+
+    .obd-sort {
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .obd-sort svg {
+        vertical-align: middle;
+        margin-left: 4px;
+    }
+
+    .obd-actions {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .obd-actions .icon-more {
+        cursor: pointer;
+        display: inline-flex;
+    }
+
+    .obd-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 10px;
+        font-size: 10px;
+        color: var(--obd-text);
+    }
+
+    .obd-pagination {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .obd-pagination a {
+        width: 24px;
+        height: 24px;
+        border: 1px solid var(--obd-border);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        color: var(--obd-text);
+        text-decoration: none;
+        background: #fff;
+    }
+
+    .obd-pagination a.active {
+        background: var(--obd-primary);
+        border-color: var(--obd-primary);
+        color: #fff;
+        font-weight: 600;
+    }
+
+    .obd-pagination a:hover:not(.active) {
+        background: #f3f4f6;
+    }
+
+    .obd-foot select {
+        width: 80px;
+        height: 24px;
+        padding: 0 22px 0 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 4px;
+        font-size: 10px;
+        background: #fff url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1L5 5L9 1" stroke="%23374151" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>') no-repeat right 8px center;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        cursor: pointer;
+    }
+</style>
+
+<main class="main-section obd-page">
+    <div class="obd-head">
+        <div class="obd-head__title">
+            <div class="obd-head__icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b8a2f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+            </div>
+            <div>
+                <h2>Cấu hình OBD</h2>
+                <p>Quản lý và cấu hình thông tin OBD</p>
+            </div>
+        </div>
+        <div class="obd-head__actions">
+            <div class="obd-search">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#3b8a2f" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="M21 21l-4.35-4.35"></path>
+                </svg>
+                <input type="text" id="obd_keyword" placeholder="Tìm kiếm mã OBD, tên hàng, material...">
+            </div>
+            <button type="button" class="obd-btn obd-btn--primary" id="btn_add_obd">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round">
+                    <path d="M12 5v14M5 12h14"></path>
+                </svg>
+                Thêm cấu hình OBD
+            </button>
+        </div>
+    </div>
+
+    <div class="obd-filter">
+        <div class="obd-filter__item">
+            <label for="obd_product_type">Loại hàng</label>
+            <select id="obd_product_type">
+                <option value="-1">Tất cả</option>
+            </select>
+        </div>
+        <div class="obd-filter__item">
+            <label for="obd_status">Trạng thái</label>
+            <select id="obd_status">
+                <option value="-1">Tất cả</option>
+                <option value="1">Đang áp dụng</option>
+                <option value="0">Tạm ngưng</option>
+            </select>
+        </div>
+        <div class="obd-filter__item">
+            <label for="obd_product_group">Nhóm hàng</label>
+            <select id="obd_product_group">
+                <option value="-1">Tất cả</option>
+            </select>
+        </div>
+        <button type="button" class="obd-btn obd-btn--outline" id="btn_reset_obd">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 4v6h-6"></path>
+                <path d="M1 20v-6h6"></path>
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            Đặt lại
+        </button>
+    </div>
+
+    <div class="obd-stats">
+        <div class="obd-stat obd-stat--total">
+            <div class="obd-stat__icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b8a2f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="obd-stat__label">Tổng OBD cấu hình</div>
+                <div class="obd-stat__value" id="obd_total">58</div>
+                <div class="obd-stat__unit">Mã OBD</div>
+            </div>
+        </div>
+        <div class="obd-stat obd-stat--active">
+            <div class="obd-stat__icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b8a2f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M8 12l3 3 5-6"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="obd-stat__label">Đang áp dụng</div>
+                <div class="obd-stat__value" id="obd_active">46</div>
+                <div class="obd-stat__unit">Mã OBD</div>
+            </div>
+        </div>
+        <div class="obd-stat obd-stat--paused">
+            <div class="obd-stat__icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f07c2a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M10 9v6M14 9v6"></path>
+                </svg>
+            </div>
+            <div>
+                <div class="obd-stat__label">Tạm ngưng</div>
+                <div class="obd-stat__value" id="obd_paused">12</div>
+                <div class="obd-stat__unit">Mã OBD</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="obd-table" id="grid_data">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;">STT</th>
+                    <th class="obd-sort">Delivery (OBD)<svg width="8" height="10" viewBox="0 0 8 10" fill="none"><path d="M1 3.5L4 1l3 2.5M1 6.5L4 9l3-2.5" stroke="#6b7280" stroke-linecap="round" stroke-linejoin="round" /></svg></th>
+                    <th class="obd-sort">Loading Date<svg width="8" height="10" viewBox="0 0 8 10" fill="none"><path d="M1 3.5L4 1l3 2.5M1 6.5L4 9l3-2.5" stroke="#6b7280" stroke-linecap="round" stroke-linejoin="round" /></svg></th>
+                    <th class="obd-sort">Ship-to Party<svg width="8" height="10" viewBox="0 0 8 10" fill="none"><path d="M1 3.5L4 1l3 2.5M1 6.5L4 9l3-2.5" stroke="#6b7280" stroke-linecap="round" stroke-linejoin="round" /></svg></th>
+                    <th class="obd-sort">Name Ship-to Party<svg width="8" height="10" viewBox="0 0 8 10" fill="none"><path d="M1 3.5L4 1l3 2.5M1 6.5L4 9l3-2.5" stroke="#6b7280" stroke-linecap="round" stroke-linejoin="round" /></svg></th>
+                    <th class="obd-sort">Material<svg width="8" height="10" viewBox="0 0 8 10" fill="none"><path d="M1 3.5L4 1l3 2.5M1 6.5L4 9l3-2.5" stroke="#6b7280" stroke-linecap="round" stroke-linejoin="round" /></svg></th>
+                    <th class="obd-sort">Item Description<svg width="8" height="10" viewBox="0 0 8 10" fill="none"><path d="M1 3.5L4 1l3 2.5M1 6.5L4 9l3-2.5" stroke="#6b7280" stroke-linecap="round" stroke-linejoin="round" /></svg></th>
+                    <th class="obd-sort">Batch<svg width="8" height="10" viewBox="0 0 8 10" fill="none"><path d="M1 3.5L4 1l3 2.5M1 6.5L4 9l3-2.5" stroke="#6b7280" stroke-linecap="round" stroke-linejoin="round" /></svg></th>
+                    <th class="obd-sort">Total Weight (kg)<svg width="8" height="10" viewBox="0 0 8 10" fill="none"><path d="M1 3.5L4 1l3 2.5M1 6.5L4 9l3-2.5" stroke="#6b7280" stroke-linecap="round" stroke-linejoin="round" /></svg></th>
+                    <th>Net Weight (kg)</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in rows)
+                {
+                    <tr>
+                        <td>@stt</td>
+                        <td class="fw-600">@item.Delivery</td>
+                        <td>@item.LoadingDate</td>
+                        <td>@item.ShipTo</td>
+                        <td class="text-left">@item.ShipToName</td>
+                        <td>@item.Material</td>
+                        <td class="text-left">@item.Description</td>
+                        <td class="fw-600">@item.Batch</td>
+                        <td class="text-right">@item.TotalWeight</td>
+                        <td class="text-right">@item.NetWeight</td>
+                        <td>
+                            <span class="obd-actions">
+                                <i class="icon-edit" title="Chỉnh sửa"></i>
+                                <span class="icon-more" title="Thêm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="4" height="14" viewBox="0 0 4 14" fill="#374151">
+                                        <circle cx="2" cy="2" r="1.4"></circle>
+                                        <circle cx="2" cy="7" r="1.4"></circle>
+                                        <circle cx="2" cy="12" r="1.4"></circle>
+                                    </svg>
+                                </span>
+                            </span>
+                        </td>
+                    </tr>
+                    stt++;
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="obd-foot">
+        <div>Hiển thị 1 - 8 trong tổng số 58 cấu hình</div>
+        <div class="obd-pagination">
+            <a href="javascript:;" title="Trang trước">
+                <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M5 1L1 5l4 4" stroke="#374151" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </a>
+            <a href="javascript:;" class="active">1</a>
+            <a href="javascript:;">2</a>
+            <a href="javascript:;">3</a>
+            <a href="javascript:;">4</a>
+            <a href="javascript:;">5</a>
+            <a href="javascript:;" title="Trang sau">
+                <svg width="6" height="10" viewBox="0 0 6 10" fill="none"><path d="M1 1l4 4-4 4" stroke="#374151" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+            </a>
+        </div>
+        <select id="obd_page_size">
+            <option value="20">20 / trang</option>
+            <option value="50">50 / trang</option>
+            <option value="100">100 / trang</option>
+        </select>
+    </div>
+</main>
