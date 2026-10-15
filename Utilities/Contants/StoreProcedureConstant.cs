@@ -67,5 +67,14 @@ namespace Utilities.Contants
 
         public static string SP_GetListCartoFactory_EX = "SP_GetListCartoFactory_EX";
 
+        public static string SP_GetObdBusinessDate = "SP_GetObdBusinessDate";
+        public static string SP_InsertObdConfigFromExcel = "SP_InsertObdConfigFromExcel";
+        public static string SP_InsertObdConfig = "SP_InsertObdConfig";
+        public static string SP_UpdateObdConfig = "SP_UpdateObdConfig";
+        public static string SP_GetListObdConfigVersion = "SP_GetListObdConfigVersion";
+        public static string SP_GetListObdConfig = "SP_GetListObdConfig";
+        public static string SP_GetObdConfigById = "SP_GetObdConfigById";
+        public static string SP_GetListObdConfigLog = "SP_GetListObdConfigLog";
+
     }
 }

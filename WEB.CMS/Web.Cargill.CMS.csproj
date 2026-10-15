@@ -34,4 +34,13 @@
     <Folder Include="Views\Shared\Components\" />
   </ItemGroup>
 
+  <!-- Visual Studio folder publish có thể bỏ sót wwwroot: luôn copy đủ file tĩnh sang thư mục publish -->
+  <Target Name="EnsureWwwrootPublished" AfterTargets="Publish">
+    <ItemGroup>
+      <_WwwrootPublishFiles Include="wwwroot\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_WwwrootPublishFiles)" DestinationFiles="@(_WwwrootPublishFiles->'$(PublishDir)wwwroot\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+    <Copy Condition="'$(PublishUrl)' != ''" SourceFiles="@(_WwwrootPublishFiles)" DestinationFiles="@(_WwwrootPublishFiles->'$(PublishUrl)\wwwroot\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

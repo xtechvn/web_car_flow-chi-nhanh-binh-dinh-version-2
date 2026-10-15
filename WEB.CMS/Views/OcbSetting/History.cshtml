@@ -1,0 +1,242 @@
+@using Entities.ViewModels.ObdConfig
+@using WEB.CMS.Controllers
+@using System.Globalization
+@model ObdConfigHistoryModel
+@{
+    string FormatValue(string fieldName, string value)
+    {
+        if (string.IsNullOrEmpty(value)) return "";
+        if (fieldName == "NetWeight" && decimal.TryParse(value, NumberStyles.Number, CultureInfo.InvariantCulture, out var weight))
+            return ObdSettingController.FormatWeight(weight);
+        return value;
+    }
+
+    string FieldLabel(string fieldName) => fieldName == "NetWeight" ? "Net Weight" : fieldName;
+}
+<style>
+    .obd-history {
+        font-size: 12px;
+        color: #111827;
+    }
+
+    .obd-history__info {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px 24px;
+        padding: 12px 14px;
+        margin-bottom: 14px;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        background: #f9fafb;
+    }
+
+    .obd-history__info label {
+        display: block;
+        font-size: 10px;
+        color: #6b7280;
+        margin-bottom: 2px;
+    }
+
+    .obd-history__info span {
+        font-weight: 600;
+    }
+
+    .obd-history__table {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        overflow-x: auto;
+        max-height: 420px;
+        overflow-y: auto;
+    }
+
+    .obd-history__table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .obd-history__table th {
+        position: sticky;
+        top: 0;
+        background: #f9fafb;
+        font-weight: 600;
+        padding: 8px;
+        text-align: center;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .obd-history__table td {
+        padding: 8px;
+        text-align: center;
+        border-bottom: 1px solid #f3f4f6;
+        vertical-align: top;
+    }
+
+    .obd-history__table td.text-left {
+        text-align: left;
+    }
+
+    .obd-history__old {
+        color: #9ca3af;
+        text-decoration: line-through;
+    }
+
+    .obd-history__new {
+        font-weight: 600;
+    }
+
+    .obd-history__tag {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 10px;
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .obd-history__tag--import {
+        background: #e8f3e6;
+        color: #24601b;
+    }
+
+    .obd-history__tag--insert {
+        background: #e3eafb;
+        color: #2f5bb7;
+    }
+
+    .obd-history__tag--update {
+        background: #fdeee2;
+        color: #9a4a10;
+    }
+
+    .obd-history__empty {
+        padding: 20px;
+        text-align: center;
+        color: #6b7280;
+    }
+</style>
+
+<div class="obd-history">
+    @if (Model == null || Model.Detail == null)
+    {
+        <div class="obd-history__empty">Không tìm thấy bản ghi OBD</div>
+    }
+    else
+    {
+        var detail = Model.Detail;
+        <div class="obd-history__info">
+            <div>
+                <label>Delivery (OBD) hiện tại</label>
+                <span>@detail.Delivery</span>
+            </div>
+            <div>
+                <label>Net Weight</label>
+                <span>@ObdSettingController.FormatWeight(detail.NetWeight) kg</span>
+            </div>
+            <div>
+                <label>Loading Date / Version</label>
+                <span>@detail.LoadingDate.ToString("dd/MM/yyyy") / Version @detail.Version</span>
+            </div>
+            <div></div>
+            <div>
+                <label>Người tạo</label>
+                <span>@detail.UserCreateName</span> - @detail.CreateDate.ToString("HH:mm dd/MM/yyyy")
+            </div>
+            <div>
+                <label>Người sửa cuối</label>
+                @if (detail.UpdateLast.HasValue)
+                {
+                    <span>@detail.UserUpdateName</span><span style="font-weight: 400;"> - @detail.UpdateLast.Value.ToString("HH:mm dd/MM/yyyy")</span>
+                }
+                else
+                {
+                    <span style="font-weight: 400; color: #6b7280;">Chưa chỉnh sửa</span>
+                }
+            </div>
+        </div>
+
+        <div class="obd-history__table">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">STT</th>
+                        <th>Thời gian</th>
+                        <th>Người thực hiện</th>
+                        <th>Thao tác</th>
+                        <th>Giá trị cũ</th>
+                        <th>Giá trị mới</th>
+                        <th>Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Logs.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="obd-history__empty">Chưa có lịch sử thao tác</td>
+                        </tr>
+                    }
+                    @{ var stt = 1; }
+                    @foreach (var log in Model.Logs)
+                    {
+                        var fields = (log.FieldName ?? "").Split('|');
+                        var oldValues = (log.OldValue ?? "").Split('|');
+                        var newValues = (log.NewValue ?? "").Split('|');
+                        <tr>
+                            <td>@stt</td>
+                            <td style="white-space: nowrap;">@log.CreateDate.ToString("HH:mm:ss dd/MM/yyyy")</td>
+                            <td>@log.UserName</td>
+                            <td>
+                                @switch (log.Action)
+                                {
+                                    case ObdConfigLogModel.ACTION_IMPORT:
+                                        <span class="obd-history__tag obd-history__tag--import">Import Excel</span>
+                                        break;
+                                    case ObdConfigLogModel.ACTION_INSERT:
+                                        <span class="obd-history__tag obd-history__tag--insert">Thêm thủ công</span>
+                                        break;
+                                    case ObdConfigLogModel.ACTION_UPDATE:
+                                        <span class="obd-history__tag obd-history__tag--update">Sửa Delivery</span>
+                                        break;
+                                }
+                            </td>
+                            <td class="text-left">
+                                @if (log.Action == ObdConfigLogModel.ACTION_UPDATE)
+                                {
+                                    for (var i = 0; i < fields.Length; i++)
+                                    {
+                                        <div class="obd-history__old">@FormatValue(fields[i], i < oldValues.Length ? oldValues[i] : "")</div>
+                                    }
+                                }
+                                else
+                                {
+                                    @:—
+                                }
+                            </td>
+                            <td class="text-left">
+                                @if (log.Action != ObdConfigLogModel.ACTION_IMPORT)
+                                {
+                                    for (var i = 0; i < fields.Length; i++)
+                                    {
+                                        var value = FormatValue(fields[i], i < newValues.Length ? newValues[i] : "");
+                                        <div class="obd-history__new">@(fields.Length > 1 ? FieldLabel(fields[i]) + ": " : "")@value</div>
+                                    }
+                                }
+                            </td>
+                            <td class="text-left">
+                                @if (log.Action == ObdConfigLogModel.ACTION_IMPORT)
+                                {
+                                    @($"File: {log.FileName} · {(log.TotalRow ?? 0):N0} dòng · Version {log.Version}")
+                                }
+                                else if (log.Action == ObdConfigLogModel.ACTION_INSERT)
+                                {
+                                    @($"Thêm vào Version {log.Version}")
+                                }
+                            </td>
+                        </tr>
+                        stt++;
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

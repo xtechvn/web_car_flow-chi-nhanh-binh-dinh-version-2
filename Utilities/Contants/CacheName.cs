@@ -8,6 +8,6 @@ namespace Utilities.Contants
 {
     public struct CacheName
     {
-        public const string USER_ROLE = "CARGILL_Binh_Dinh_USER_ROLE_";
+        public const string USER_ROLE = "CARGILL_Binh_Duong_USER_ROLE_";
     }
 }
