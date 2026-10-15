@@ -65,7 +65,7 @@ curl -X POST "https://<domain-cms-binh-duong>/api/registration-queue/receive" \
 | HTTP | `code` | Ý nghĩa | n8n nên |
 |---|---|---|---|
 | 200 | `INSERTED` | Đã ghi SQL, trả `id` | Ack |
-| 200 | `DUPLICATE` | `MessageId` đã ghi trước đó, trả `id` cũ | Ack |
+| 200 | `DUPLICATE` | `MessageId` đã ghi trước đó, hoặc xe đã có trong SQL (đã được đẩy lại từ MongoDB), trả `id` cũ | Ack |
 | 400 | `INVALID_MESSAGE` | Thiếu `MessageId` / `PlateNumber`, `QueueNumber` ≤ 0, sai `Site`... | Ack + lưu lại để xem (gửi lại vẫn lỗi) |
 | 401 | `UNAUTHORIZED` | Sai / thiếu `X-Api-Key` | Dừng, sửa cấu hình |
 | 409 | `IN_PROGRESS` | Cùng `MessageId` đang được xử lý | Thử lại sau vài giây |
@@ -107,6 +107,11 @@ sequenceDiagram
             API-->>N8N: 409 IN_PROGRESS
         end
     end
+    API->>SQL: Xe đã có? (cùng số thứ tự + cùng giờ / cùng biển số)
+    alt Đã có (đẩy lại từ MongoDB trước đó)
+        API->>R: SET key = Id cũ
+        API-->>N8N: 200 DUPLICATE {id}
+    end
     API->>SQL: GetAudioPathByVehicleNumber(biển số)
     API->>SQL: sp_InsertVehicleInspection → @Identity
     alt Insert lỗi
@@ -139,42 +144,83 @@ sequenceDiagram
 | `Referee` | `@VehicleLoad` | |
 | (tra theo biển số) | `@AudioPath` | Lấy từ `GetAudioPathByVehicleNumber` |
 
-Code ghi: `Repositories.VehicleInspectionRepository.SaveVehicleInspection` → `DAL.VehicleInspectionDAL.SaveVehicleInspection`.
+Code ghi: `Services/RegistrationImportService.ImportIfNotExistsAsync` → `Repositories.VehicleInspectionRepository.SaveVehicleInspection`
+→ `DAL.VehicleInspectionDAL.SaveVehicleInspection`. API n8n và chức năng đẩy lại (mục 4.2) dùng chung service này.
 
 Các màn CMS đọc dữ liệu này: `Car/RegisteredVehicle`, `Car/CartoFactory`, `Car/ProcessingIsLoading`,
 `Car/CallTheScale`, `Car/WeighedInput`, `SummaryReport/TotalVehicleInspection`.
 
-### 4.1 Màn "Danh sách xe đăng ký" (`Car/CartoFactory`) lọc theo đợt
+### 4.1 Màn "Danh sách xe đăng ký" (`Car/CartoFactory`) – quy tắc gốc của dự án
 
-`CarController.ListCartoFactory` → `VehicleInspectionRepository.GetListCartoFactory` → `SP_GetListVehicleInspection`.
+`CarController.ListCartoFactory` → `VehicleInspectionRepository.GetListCartoFactory` → `SP_GetListVehicleInspection` (giữ nguyên bản gốc).
 
-- Repository tính `@RegisterDateOnline` = giờ `TIME_RESET` **kế tiếp**: chưa tới giờ reset hôm nay → reset hôm nay;
-  đã qua → reset ngày mai. Khớp `BusinessDate` mà XTECH-FRONTEND gán cho số thứ tự.
-- SP lấy xe có `RegisterDateOnline` trong `[@RegisterDateOnline − 1 ngày, @RegisterDateOnline)`,
-  cộng thêm xe `VehicleStatus = 0` (đã đến nhà máy) đăng ký từ hôm nay.
-- Script: `source/Scripts/SP_GetListVehicleInspection_20261015.sql`.
+- Repository truyền `@RegisterDateOnline` = giờ `TIME_RESET` **hôm nay**.
+- SP lấy mốc đầu đợt = giờ đăng ký của xe `RecordNumber = 1` đăng ký sau `TIME_RESET − 5 phút` của hôm trước.
+- Hệ quả: nếu xe số 1 của đợt chưa có trong SQL thì danh sách trống → dùng chức năng đẩy lại ở mục 4.2 để bổ sung xe bị thiếu.
+
+### 4.2 Đẩy lại xe bị thiếu từ MongoDB
+
+XTECH-FRONTEND lưu mọi xe đăng ký vào MongoDB `CarLog.Data_Car_Binh_Duong` ngay khi cấp số.
+Nếu message RabbitMQ bị mất / n8n lỗi, xe có trong MongoDB nhưng không có trong SQL → gọi là **xe bị thiếu**.
+
+**Giao diện** (`Car/CartoFactory`):
+
+- Cạnh tiêu đề "Danh sách xe đăng ký" có icon cảnh báo nhấp nháy kèm số xe bị thiếu. Không có xe thiếu → icon ẩn.
+- Số đếm cập nhật khi mở trang và mỗi 30 giây.
+- Bấm icon → lightbox liệt kê xe bị thiếu (tick chọn, mặc định chọn tất cả) → nút **"Đẩy vào hệ thống"**.
+- Đẩy xong: còn xe thiếu → lightbox tải lại; hết → đóng lightbox, icon biến mất, danh sách tải lại.
+
+**Phạm vi đối chiếu:** chỉ đợt hiện tại, cùng quy tắc reset số của XTECH-FRONTEND:
+`mốc cuối = hôm nay TIME_RESET − 5 phút` (đã qua thì + 1 ngày), `mốc đầu = mốc cuối − 1 ngày`.
+
+**Thế nào là "đã có trong SQL":** cùng `RecordNumber` và (lệch `RegisterDateOnline` ≤ 2 giây, hoặc cùng biển số
+(bỏ khoảng trắng / ký tự đặc biệt) và lệch ≤ 12 giờ). Nhờ vậy xe đã được CMS sửa giờ hoặc sửa biển số vẫn không bị đẩy trùng.
+
+**Chống trùng:**
+
+- Danh sách đẩy luôn được tính lại ở server; id gửi lên chỉ dùng để chọn.
+- Kiểm tra tồn tại + insert nằm trong một khóa (`SemaphoreSlim`) dùng chung với API n8n.
+- Message n8n đến sau cho xe đã đẩy lại → API trả `DUPLICATE`, không insert.
+
+| Endpoint (cần đăng nhập CMS) | Trả về |
+|---|---|
+| `GET /RegistrationRecovery/Count` | `{ status, count }` |
+| `POST /RegistrationRecovery/Popup` | HTML lightbox |
+| `POST /RegistrationRecovery/Push` (`ids[]` = `_id` MongoDB) | `{ status, msg, pushed, skipped, failed, remaining }` |
 
 ```mermaid
 sequenceDiagram
-    participant UI as cartofactory.js
-    participant C as CarController.ListCartoFactory
-    participant RP as VehicleInspectionRepository
-    participant SQL as SQL Server
-    UI->>C: POST /Car/ListCartoFactory (VehicleStatus null / 0 / 2)
-    C->>RP: GetListCartoFactory
-    RP->>SQL: AllCode TIME_RESET (vd 17:23)
-    RP->>RP: now ≥ 17:23 hôm nay ? mốc = 17:23 ngày mai : 17:23 hôm nay
-    RP->>SQL: SP_GetListVehicleInspection(@RegisterDateOnline = mốc)
-    SQL-->>RP: Xe đăng ký trong [mốc − 1 ngày, mốc)
-    RP-->>UI: Danh sách
+    autonumber
+    participant UI as CartoFactory<br/>registrationRecovery.js
+    participant C as RegistrationRecoveryController
+    participant S as RegistrationRecoveryService
+    participant M as MongoDB<br/>CarLog.Data_Car_Binh_Duong
+    participant I as RegistrationImportService
+    participant SQL as SQL Server<br/>VehicleInspection
+
+    loop Khi mở trang + mỗi 30 giây
+        UI->>C: GET /RegistrationRecovery/Count
+        C->>S: GetMissingAsync()
+        S->>SQL: AllCode TIME_RESET → đợt hiện tại
+        S->>M: Xe có RegistrationTime trong đợt
+        S->>SQL: Xe trong đợt (± 12 giờ)
+        S-->>C: Xe có trong Mongo mà chưa có trong SQL
+        C-->>UI: count → hiện/ẩn icon nhấp nháy
+    end
+    UI->>C: Bấm icon → POST Popup
+    C-->>UI: Lightbox danh sách xe thiếu
+    UI->>C: "Đẩy vào hệ thống" → POST Push(ids)
+    C->>S: PushAsync(ids)
+    S->>S: Tính lại danh sách thiếu, lọc theo ids, sắp theo số thứ tự
+    loop Từng xe
+        S->>I: ImportIfNotExistsAsync (có khóa)
+        I->>SQL: Đã có? → bỏ qua
+        I->>SQL: sp_InsertVehicleInspection
+        I->>I: Publish realtime + queue audio
+    end
+    S-->>C: pushed / skipped / failed / remaining
+    C-->>UI: Thông báo; remaining = 0 → đóng lightbox, ẩn icon, tải lại danh sách
 ```
-
-Ví dụ reset 17:23: lúc 22:53 ngày 15/10, mốc = 16/10 17:23 → hiện xe đăng ký từ 15/10 17:23 trở đi.
-
-**Lưu ý:** 8 SP khác (`SP_GetListVehicleCallTheScale`, `SP_GetListVehicleCarCallList`, `SP_GetListVehicleProcessingIsLoading`,
-`SP_GetListVehicleWeighedInput`, `SP_GetListVehicleListVehicles`, `SP_GetListCartoFactory_EX`,
-`SP_GetListVehicleInspectionSynthetic`, `SP_CountTotalVehicleInspectionSynthetic`) vẫn lấy mốc "xe `RecordNumber = 1`":
-nếu đợt đó không có xe số 1 trong SQL, các màn này sẽ trống. Các màn đó vẫn dùng giờ reset **hôm nay** (chưa đổi).
 
 ## 5. Cấu hình (`appsettings.json`)
 
@@ -186,6 +232,8 @@ nếu đợt đó không có xe số 1 trong SQL, các màn này sẽ trống. C
 | `RegistrationConsumer:ProcessedKeyHours` | `72` | Thời gian nhớ `MessageId` đã xử lý |
 | `Redis:Database:db_common` | `15` | DB Redis lưu key chống trùng |
 | `Queue:QueueSyncES` | `QUEUE_AUDIO_TEXT_TO_SPEED` | Queue tạo audio đọc biển số |
+| `MongoServer:Host/Port/user/pwd` | `103.163.216.60:27017` | MongoDB chứa bản ghi đăng ký của XTECH-FRONTEND (`pwd` đã URL-encode) |
+| `MongoServer:catalog_log` / `Data_Car` | `CarLog` / `Data_Car_Binh_Duong` | Phải trùng cấu hình MongoDB của XTECH-FRONTEND |
 
 ## 6. Key Redis
 

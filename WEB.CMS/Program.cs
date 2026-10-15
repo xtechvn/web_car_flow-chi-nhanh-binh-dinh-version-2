@@ -48,6 +48,8 @@ builder.Services.AddSingleton<IMenuRepository, MenuRepository>();
 builder.Services.AddSingleton<IInspectionRepository, InspectionRepository>();
 builder.Services.AddSingleton<IObdConfigRepository, ObdConfigRepository>();
 builder.Services.AddSingleton<RedisConn>();
+builder.Services.AddSingleton<RegistrationImportService>();
+builder.Services.AddSingleton<RegistrationRecoveryService>();
 builder.Services.AddHostedService<RedisSubscriberService>();
 builder.Services.AddSingleton<ManagementUser>();
 // Add SignalR với cấu hình KeepAlive

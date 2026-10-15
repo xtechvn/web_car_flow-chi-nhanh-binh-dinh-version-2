@@ -1,0 +1,131 @@
+@using WEB.CMS.Services
+@model List<MissingRegistration>
+@{
+    var period = ViewBag.Period as RecoveryPeriod;
+}
+<style>
+    .reg-recovery {
+        font-size: 12px;
+        color: #111827;
+    }
+
+    .reg-recovery__info {
+        padding: 10px 14px;
+        margin-bottom: 12px;
+        border: 1px solid #fde68a;
+        border-radius: 6px;
+        background: #fffbeb;
+        color: #92400e;
+    }
+
+    .reg-recovery__table {
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        overflow-x: auto;
+        max-height: 420px;
+        overflow-y: auto;
+    }
+
+    .reg-recovery__table table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .reg-recovery__table th {
+        position: sticky;
+        top: 0;
+        background: #f9fafb;
+        font-weight: 600;
+        padding: 8px;
+        text-align: center;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .reg-recovery__table td {
+        padding: 8px;
+        text-align: center;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .reg-recovery__table td.text-left {
+        text-align: left;
+    }
+
+    .reg-recovery__empty {
+        padding: 20px;
+        text-align: center;
+        color: #6b7280;
+    }
+
+    .reg-recovery__actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 14px;
+    }
+</style>
+
+<div class="reg-recovery">
+    @if (ViewBag.Error != null)
+    {
+        <div class="reg-recovery__empty" style="color: #b91c1c;">@ViewBag.Error</div>
+    }
+    else if (Model == null || Model.Count == 0)
+    {
+        <div class="reg-recovery__empty">Không còn xe nào bị thiếu trong đợt hiện tại.</div>
+    }
+    else
+    {
+        <div class="reg-recovery__info">
+            Có <b>@Model.Count</b> xe đã đăng ký (có trong MongoDB) nhưng chưa vào danh sách
+            @if (period != null)
+            {
+                <span>— đợt từ @period.PeriodStart.ToString("HH:mm dd/MM/yyyy") đến @period.PeriodEnd.ToString("HH:mm dd/MM/yyyy")</span>
+            }
+            . Chọn xe rồi bấm "Đẩy vào hệ thống".
+        </div>
+
+        <div class="reg-recovery__table">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="reg-recovery-check-all" checked /></th>
+                        <th>STT</th>
+                        <th>Giờ đăng ký online</th>
+                        <th>Tên khách hàng (Trại, đại lý)</th>
+                        <th>Tên lái xe</th>
+                        <th>Biển số xe</th>
+                        <th>Số điện thoại</th>
+                        <th>Tải trọng xe (kg)</th>
+                        <th>KH Ghi chú</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td><input type="checkbox" class="reg-recovery-check" value="@item.MongoId" checked /></td>
+                            <td><b>@item.QueueNumber</b></td>
+                            <td style="white-space: nowrap;">@item.RegistrationTime.ToString("HH:mm:ss dd/MM/yyyy")</td>
+                            <td class="text-left">@item.Name</td>
+                            <td class="text-left">@item.GPLX</td>
+                            <td style="white-space: nowrap;"><b>@item.PlateNumber</b></td>
+                            <td>@item.PhoneNumber</td>
+                            <td>@item.Referee</td>
+                            <td class="text-left">@item.Camp</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <div class="reg-recovery__actions">
+        @if (ViewBag.Error == null && Model != null && Model.Count > 0)
+        {
+            <button type="button" class="btn btn-primary" id="reg-recovery-push" onclick="_registration_recovery.Push()">Đẩy vào hệ thống</button>
+        }
+        <button type="button" class="btn btn-default" onclick="$.magnificPopup.close()">Đóng</button>
+    </div>
+</div>

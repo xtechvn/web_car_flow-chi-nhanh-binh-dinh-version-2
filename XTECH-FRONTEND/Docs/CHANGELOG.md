@@ -4,6 +4,25 @@ Mỗi lần thay đổi code phải thêm một mục mới ở đầu file: ng�
 
 ---
 
+## 2026-10-16 – Khôi phục quy tắc gốc của dự án
+
+Bỏ các quy tắc tự thêm ở bản 2026-10-04 mà dự án gốc không có.
+
+| File | Thay đổi |
+|---|---|
+| `Controllers/API/CarRegistration/CarRegistrationController.cs` | `registerV2` bỏ `ValidateRegistrationV2` và bỏ chặn "chốt sổ 5 phút"; giữ rate limit 20 request/phút/IP |
+| `Services/Registration/IRegistrationScheduleService.cs`, `RegistrationScheduleService.cs` | `RegistrationWindow` chỉ còn `BusinessDate`, `PeriodStart`, `PeriodEnd`; số thứ tự về 1 lúc `TIME_RESET − 5 phút` như bản gốc |
+| `Services/Registration/RegistrationOptions.cs`, `appsettings.json` | `CloseBeforeResetMinutes` → `CounterResetOffsetMinutes` (5) |
+| `Repositories/ValidationService.cs`, `IRepositories/IValidationService.cs` | Chép lại bản gốc (xóa `ValidateRegistrationV2`) |
+| `Docs/README.md` | Mục 4, 5, 8, 9 theo quy tắc gốc |
+
+**Lưu ý vận hành:** `appsettings.json` trên server phải đổi key `Registration:CloseBeforeResetMinutes` thành
+`Registration:CounterResetOffsetMinutes` (không đổi thì dùng mặc định 5).
+
+Xe bị thiếu (có trong MongoDB, chưa vào SQL) được đẩy lại ở WEB.CMS – xem `source/WEB.CMS/Docs/README.md` mục 4.2.
+
+---
+
 ## 2026-10-04 – Consumer chuyển sang n8n + API WEB.CMS (chỉ tài liệu)
 
 Không đổi code XTECH-FRONTEND. Cập nhật `Docs/README.md` mục 1, 4.1, 7: consumer là n8n,

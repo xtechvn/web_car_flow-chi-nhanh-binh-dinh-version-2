@@ -18,7 +18,7 @@ Dữ liệu đăng ký được đẩy vào **RabbitMQ**; n8n đọc queue và g
 |---|---|---|
 | Redis | `Redis:Host`, `Redis:Port`, db `Redis:Database:db_common` (15) | Cấp số thứ tự (atomic), khóa biển số 15 phút, rate limit theo IP, outbox khi RabbitMQ lỗi |
 | RabbitMQ | `Queue:Host`, `Queue:V_Host`, `Queue:Username/Password`, `Queue:AmqpPort` (5672), `Queue:QueueRegistration` | Nhận message đăng ký (durable, persistent, publisher confirm) |
-| SQL Server | `DataBaseConfig:SqlServer:ConnectionString` (DB `Cargill_BinhDuong_v2`) | **Chỉ đọc** `AllCode.TIME_RESET` để biết giờ chốt sổ / reset số thứ tự |
+| SQL Server | `DataBaseConfig:SqlServer:ConnectionString` (DB `Cargill_BinhDuong_v2`) | **Chỉ đọc** `AllCode.TIME_RESET` để biết giờ reset số thứ tự |
 | MongoDB | `MongoServer:*`, collection `Data_Car_Binh_Duong` | Bản sao log đăng ký, phục vụ trang `/ListData` |
 | SignalR (nội bộ) | Hub `/registrationHub` | Đẩy xe mới đăng ký lên `/ListData` theo thời gian thực |
 | Telegram Bot | `BotSetting:*` | Cảnh báo lỗi / request chậm |
@@ -36,7 +36,7 @@ XTECH-FRONTEND/
 ├── Services/
 │   ├── Registration/
 │   │   ├── RegistrationOptions.cs         Section "Registration" trong appsettings
-│   │   ├── RegistrationScheduleService.cs Đọc AllCode.TIME_RESET, tính ngày làm việc + giờ chốt sổ
+│   │   ├── RegistrationScheduleService.cs Đọc AllCode.TIME_RESET, tính đợt + mốc reset số thứ tự
 │   │   └── RedisQueueNumberAllocator.cs   Script Lua: rate limit → chống trùng → INCR số thứ tự
 │   ├── Queue/
 │   │   ├── RabbitMqRegistrationPublisher.cs  Publish message (singleton, lock, confirm)
@@ -55,8 +55,8 @@ XTECH-FRONTEND/
 ### 4.1 Tóm tắt bằng lời
 
 1. Trình duyệt gửi `POST /api/carregistration/registerV2` về **chính server đang mở trang**.
-2. Server kiểm tra dữ liệu (biển số, SĐT, độ dài, chặn ký tự `< >`).
-3. Server tính **ngày làm việc** từ giờ `TIME_RESET`. Nếu đang trong 5 phút chốt sổ → từ chối.
+2. Server **không** kiểm tra định dạng dữ liệu (giữ như bản gốc; form kiểm tra bắt buộc nhập).
+3. Server tính **đợt** từ giờ `TIME_RESET`: số thứ tự về 1 lúc `TIME_RESET − 5 phút`. **Không chặn** đăng ký trong khoảng nào.
 4. Server chạy **1 script Lua trên Redis** (atomic, không thể chen ngang):
    rate limit theo IP → biển số đã đăng ký chưa → `INCR` lấy số thứ tự mới.
 5. Server publish message vào RabbitMQ. Nếu RabbitMQ lỗi → lưu tạm vào outbox Redis.
@@ -82,17 +82,9 @@ sequenceDiagram
     TX->>UI: Nhập form, bấm GỬI ĐĂNG KÝ
     UI->>API: POST /api/carregistration/registerV2
 
-    API->>API: ValidateRegistrationV2
-    alt Dữ liệu sai
-        API-->>UI: 400 "Biển số xe không đúng định dạng..."
-    end
-
     API->>SCH: GetCurrentWindowAsync(now)
     SCH->>SQL: SELECT UpdateTime FROM AllCode WHERE Type='TIME_RESET'<br/>(cache 60 giây)
-    SCH-->>API: BusinessDate, NextCutoff, IsClosed
-    alt Đang chốt sổ (5 phút trước giờ reset)
-        API-->>UI: 400 "Đã chốt sổ lúc HH:mm..."
-    end
+    SCH-->>API: BusinessDate, PeriodStart, PeriodEnd (PeriodEnd = TIME_RESET − 5 phút)
 
     API->>R: EVAL script Lua (1 lệnh, atomic)
     Note right of R: 1. INCR ratelimit:{site}:{ip}<br/>2. GET lock:{site}:{biển số}:{ngày}<br/>3. INCR counter:{site}:{ngày}<br/>4. SET lock (TTL 15 phút)
@@ -159,17 +151,18 @@ sequenceDiagram
     end
 ```
 
-## 5. Quy tắc ngày làm việc và giờ chốt sổ
+## 5. Quy tắc đợt đăng ký và reset số thứ tự (quy tắc gốc của dự án)
 
 - Giờ reset lấy từ `AllCode.TIME_RESET` (CMS cấu hình ở màn `/Configuration`), chỉ dùng giờ:phút.
   Không đọc được thì dùng `Registration:DefaultResetTime` (17:55).
-- `NextReset` = lần reset kế tiếp sau thời điểm hiện tại. `NextCutoff` = `NextReset` − 5 phút.
-- Từ `NextCutoff` đến `NextReset`: **không nhận đăng ký** (khớp với đồng hồ đếm ngược trên form).
-- `BusinessDate` = ngày của `NextReset`. Counter Redis là `counter:{Site}:{yyyyMMdd}`,
-  sang ngày làm việc mới tự bắt đầu lại từ 1. Đổi giờ reset trong ngày **không** làm reset số.
+- Số thứ tự về 1 lúc `TIME_RESET − Registration:CounterResetOffsetMinutes` (5 phút), giống bản gốc.
+- `PeriodEnd` = lần reset số kế tiếp, `PeriodStart` = `PeriodEnd − 1 ngày`.
+- **Không chặn đăng ký** ở bất kỳ thời điểm nào.
+- `BusinessDate` = ngày của `PeriodEnd`. Counter Redis là `counter:{Site}:{yyyyMMdd}`,
+  sang đợt mới tự bắt đầu lại từ 1. Đổi giờ reset trong ngày **không** làm reset số.
 
 Ví dụ với giờ reset 18:00: đăng ký lúc 10:00 ngày 04/10 → BusinessDate 04/10;
-17:55–18:00 bị chặn; đăng ký lúc 18:05 ngày 04/10 → BusinessDate 05/10, số bắt đầu lại từ 001.
+đăng ký lúc 17:56 ngày 04/10 → BusinessDate 05/10, số bắt đầu lại từ 001.
 
 ## 6. Key Redis (db 15)
 
@@ -252,7 +245,7 @@ Yêu cầu với n8n:
 | GET | `/api/CarRegistration/queue-status` | Luồng cũ | Đọc Google Sheets |
 | GET | `/api/CarRegistration/check-zalo-user/{phone}` | Luồng cũ | Zalo OA |
 
-Mã phản hồi của `registerV2`: `200` thành công; `400` sai dữ liệu / trùng biển số / đang chốt sổ;
+Mã phản hồi của `registerV2`: `200` thành công; `400` thiếu dữ liệu / trùng biển số trong 15 phút;
 `429` quá giới hạn request; `500` lỗi hệ thống.
 
 ## 9. Cấu hình `Registration`
@@ -262,7 +255,7 @@ Mã phản hồi của `registerV2`: `200` thành công; `400` sai dữ liệu /
 | `Site` | `BINH_DUONG` | Tiền tố key Redis, ghi vào message |
 | `LocationType` | `3` | Ghi vào message cho consumer |
 | `LockMinutes` | `15` | Thời gian chặn đăng ký trùng biển số |
-| `CloseBeforeResetMinutes` | `5` | Chốt sổ trước giờ reset |
+| `CounterResetOffsetMinutes` | `5` | Số thứ tự về 1 trước giờ `TIME_RESET` bao nhiêu phút (quy tắc gốc) |
 | `DefaultResetTime` | `17:55` | Giờ reset khi không đọc được SQL |
 | `ResetTimeCacheSeconds` | `60` | Cache giờ reset |
 | `RateLimitPerWindow` / `RateLimitWindowSeconds` | `20` / `60` | Rate limit theo IP |

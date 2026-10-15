@@ -17,7 +17,7 @@ namespace XTECH_FRONTEND.Controllers
         // GET: /home/
         public async Task<IActionResult> Index()
         {
-            // Giờ reset lấy từ AllCode.TIME_RESET (CMS cấu hình), view dùng để khóa form trước giờ chốt sổ
+            // Giờ reset lấy từ AllCode.TIME_RESET (CMS cấu hình), view dùng cho đồng hồ đếm ngược như bản gốc
             var resetTime = await _scheduleService.GetTodayResetTimeAsync();
             ViewBag.Data = resetTime.ToString("dd/MM/yyyy HH:mm:ss");
             return View();

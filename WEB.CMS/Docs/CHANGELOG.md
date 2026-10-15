@@ -4,7 +4,48 @@ Mỗi lần thay đổi code phải thêm một mục mới ở đầu file: ng�
 
 ---
 
-## 2026-10-15 – Sửa màn "Danh sách xe đăng ký" không hiện xe
+## 2026-10-16 – Đẩy lại xe bị thiếu từ MongoDB + khôi phục quy tắc gốc
+
+**Mục đích:** xe có trong MongoDB (FE đã cấp số) nhưng chưa vào SQL (message mất / n8n lỗi) được hiển thị
+bằng icon nhấp nháy có số đếm cạnh tiêu đề "Danh sách xe đăng ký"; bấm icon mở lightbox để đẩy vào hệ thống.
+
+**Khôi phục (theo yêu cầu, không đổi quy tắc dự án):**
+
+- `SP_GetListVehicleInspection` trên `Cargill_BinhDuong_v2` đã ALTER lại đúng bản gốc (đã đối chiếu khớp).
+- `Repositories/Repositories/VehicleInspectionRepository.cs` chép lại bản gốc.
+- Xóa `source/Scripts/SP_GetListVehicleInspection_20261015.sql`.
+- Mục 2026-10-15 bên dưới **không còn hiệu lực**.
+
+**Thêm mới**
+
+| File | Nội dung |
+|---|---|
+| `Services/RegistrationImportService.cs` | Kiểm tra xe đã có trong SQL + insert (có khóa), publish realtime, queue audio. Dùng chung cho API n8n và đẩy lại |
+| `Services/RegistrationRecoveryService.cs` | Tính đợt hiện tại từ `TIME_RESET`, đối chiếu MongoDB ↔ SQL, đẩy xe thiếu theo số thứ tự |
+| `Controllers/RegistrationRecoveryController.cs` | `Count`, `Popup`, `Push` (`[CustomAuthorize]`) |
+| `Views/RegistrationRecovery/Popup.cshtml` | Lightbox danh sách xe thiếu + nút "Đẩy vào hệ thống" |
+| `wwwroot/modules/registrationRecovery.js` | Đếm mỗi 30 giây, hiện/ẩn icon, mở lightbox, đẩy |
+
+**Sửa**
+
+| File | Thay đổi |
+|---|---|
+| `Controllers/API/RegistrationQueueController.cs` | Dùng `RegistrationImportService`; xe đã có trong SQL → `200 DUPLICATE` |
+| `Views/Car/CartoFactory.cshtml` | Icon nhấp nháy + số đếm cạnh tiêu đề, CSS, nạp `registrationRecovery.js` |
+| `Program.cs` | Đăng ký `RegistrationImportService`, `RegistrationRecoveryService` (singleton) |
+| `appsettings.json` | Thêm section `MongoServer` |
+| `Docs/README.md` | Thay mục 4.1 bằng quy tắc gốc, thêm mục 4.2 + sơ đồ, bảng cấu hình |
+
+Bản sao trước khi sửa: `binh_duong/_backup/WEB.CMS_before_recovery_20261015/`.
+
+**Lưu ý vận hành**
+
+- Deploy phải thêm section `MongoServer` vào `appsettings.json` trên server; server CMS phải kết nối được MongoDB `103.163.216.60:27017`.
+- Kiểm tra đọc dữ liệu thật lúc triển khai (không ghi): đợt 15/10 17:18 → 16/10 17:18 thiếu 4 xe – số 1 `30E45321`, 2 `30E11111`, 6 `30E4555`, 7 `30E852`.
+
+---
+
+## 2026-10-15 – Sửa màn "Danh sách xe đăng ký" không hiện xe (ĐÃ KHÔI PHỤC ngày 2026-10-16)
 
 **Nguyên nhân:**
 1. `SP_GetListVehicleInspection` lấy mốc đầu đợt = giờ đăng ký của xe `RecordNumber = 1`. Xe số 1–7 đợt 16/10 bị mất
