@@ -1,17 +1,12 @@
-﻿using DnsClient;
-using Microsoft.AspNetCore.DataProtection.KeyManagement;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Newtonsoft.Json;
-using System.Configuration;
+using Microsoft.Extensions.Options;
 using System.Diagnostics;
-using Telegram.Bot.Types;
 using XTECH_FRONTEND.IRepositories;
 using XTECH_FRONTEND.Model;
 using XTECH_FRONTEND.Repositories;
-using XTECH_FRONTEND.Services;
-using XTECH_FRONTEND.Services.BackgroundQueue;
-using XTECH_FRONTEND.Services.RedisWorker;
+using XTECH_FRONTEND.Services.Queue;
+using XTECH_FRONTEND.Services.Registration;
 using XTECH_FRONTEND.Utilities;
 
 
@@ -27,32 +22,38 @@ namespace XTECH_FRONTEND.Controllers.CarRegistration
         private readonly IZaloService _zaloService;
         private readonly ILogger<CarRegistrationController> _logger;
         private readonly IMongoService _mongoService;
-        private readonly WorkQueueClient _workQueueClient;
-        private readonly RedisConn redisService;
-        private readonly IConfiguration _configuration;
         private readonly IHubContext<RegistrationHub> _hubContext;
-        private readonly IInsertQueue _insertQueue;
+        private readonly IRegistrationScheduleService _scheduleService;
+        private readonly IQueueNumberAllocator _queueNumberAllocator;
+        private readonly IRegistrationQueuePublisher _queuePublisher;
+        private readonly PendingRegistrationStore _pendingStore;
+        private readonly RegistrationOptions _registrationOptions;
         public CarRegistrationController(
             IValidationService validationService,
             IGoogleSheetsService googleSheetsService,
             IGoogleFormsService googleFormsService,
             IZaloService zaloService,
             ILogger<CarRegistrationController> logger,
-            IConfiguration configuration,
-            IMongoService mongoService, IHubContext<RegistrationHub> hubContext, IInsertQueue insertQueue)
+            IMongoService mongoService,
+            IHubContext<RegistrationHub> hubContext,
+            IRegistrationScheduleService scheduleService,
+            IQueueNumberAllocator queueNumberAllocator,
+            IRegistrationQueuePublisher queuePublisher,
+            PendingRegistrationStore pendingStore,
+            IOptions<RegistrationOptions> registrationOptions)
         {
             _validationService = validationService;
             _googleSheetsService = googleSheetsService;
             _googleFormsService = googleFormsService;
             _zaloService = zaloService;
             _logger = logger;
-            _workQueueClient = new WorkQueueClient(configuration);
             _mongoService = mongoService;
-            redisService = new RedisConn(configuration);
-            redisService.Connect();
-            _configuration = configuration;
             _hubContext = hubContext;
-            _insertQueue = insertQueue;
+            _scheduleService = scheduleService;
+            _queueNumberAllocator = queueNumberAllocator;
+            _queuePublisher = queuePublisher;
+            _pendingStore = pendingStore;
+            _registrationOptions = registrationOptions.Value;
         }
         [HttpPost("register-V1")]
         public async Task<ActionResult<CarRegistrationResponse>> RegisterCar([FromBody] CarRegistrationRequest request)
@@ -229,6 +230,11 @@ namespace XTECH_FRONTEND.Controllers.CarRegistration
                 return StatusCode(500, new { message = "Lỗi hệ thống" });
             }
         }
+
+        /// <summary>
+        /// Đăng ký xe: cấp số thứ tự ngay bằng Redis (atomic) rồi đẩy dữ liệu vào RabbitMQ.
+        /// Không gọi API ngoài; consumer đọc queue để ghi SQL Server.
+        /// </summary>
         [HttpPost("registerV2")]
         public async Task<ActionResult<CarRegistrationResponse>> RegisterCarV2([FromBody] CarRegistrationRequest request)
         {
@@ -236,102 +242,99 @@ namespace XTECH_FRONTEND.Controllers.CarRegistration
             {
                 var stopwatch = Stopwatch.StartNew();
                 var now = DateTime.Now;
-                var hours = now.Hour;
-                var minutes = now.Minute;
 
-                // Kiểm tra khoảng 17:55 đến 18:00
+                var window = await _scheduleService.GetCurrentWindowAsync(now);
 
-      
-                string cache_name = "BinhDinh_PlateNumber_" + request.PlateNumber.Replace("-", "_")+DateTime.Now.ToString("dd_MM_yyyy");
-                var data = await redisService.GetAsync(cache_name, Convert.ToInt32(_configuration["Redis:Database:db_common"]));
-                if (data != null && data.Trim() != "")
+                var plateNumber = request.PlateNumber.Trim().ToUpper();
+                var allocation = await _queueNumberAllocator.AllocateAsync(plateNumber, window.BusinessDate, GetClientIp());
+
+                if (allocation.Status == AllocationStatus.RateLimited)
                 {
+                    var waitMinutes = Math.Max(1, (int)Math.Ceiling(allocation.RemainingSeconds / 60.0));
+                    return StatusCode(StatusCodes.Status429TooManyRequests, new CarRegistrationResponse
+                    {
+                        Success = false,
+                        Message = $"Bạn gửi quá nhiều yêu cầu, vui lòng đợi {waitMinutes} phút rồi thử lại",
+                        RemainingTimeMinutes = waitMinutes
+                    });
+                }
 
-                    var data_detail = JsonConvert.DeserializeObject<RegistrationRecord>(data);
+                if (allocation.Status == AllocationStatus.AlreadyRegistered)
+                {
+                    var waitMinutes = Math.Max(1, (int)Math.Ceiling(allocation.RemainingSeconds / 60.0));
                     return BadRequest(new CarRegistrationResponse
                     {
                         Success = false,
-                        Message = data_detail.PlateNumber + $" đã đăng ký số " + data_detail.QueueNumber + ", Vui lòng đợi 15 phút trước khi gửi lại",
-                        RemainingTimeMinutes = 15
+                        QueueNumber = allocation.QueueNumber,
+                        Message = $"{plateNumber} đã đăng ký số {allocation.QueueNumber:D3}, vui lòng đợi {waitMinutes} phút trước khi gửi lại",
+                        RemainingTimeMinutes = waitMinutes
                     });
                 }
-                var queueNumber = await _googleSheetsService.GetDailyQueueCountRedis(DateUtil.StringToDateTime( request.Timedow));
 
-
-                // Step 4: Create registration record with initial Zalo status
                 var registrationRecord = new RegistrationRecord
                 {
-                    PhoneNumber = request.PhoneNumber,
-                    PlateNumber = request.PlateNumber.ToUpper(),
-                    Name = request.Name.ToUpper(),
-                    Referee = request.Referee.ToUpper(),
-                    GPLX = request.GPLX.ToUpper(),
-                    QueueNumber = queueNumber,
-                    RegistrationTime = DateTime.Now,
+                    PhoneNumber = request.PhoneNumber.Trim(),
+                    PlateNumber = plateNumber,
+                    Name = request.Name.Trim().ToUpper(),
+                    Referee = request.Referee.Trim().ToUpper(),
+                    GPLX = request.GPLX.Trim().ToUpper(),
+                    QueueNumber = allocation.QueueNumber,
+                    RegistrationTime = now,
                     ZaloStatus = "Đang xử lý...",
-                    Camp = request.Camp,
+                    Camp = request.Camp?.Trim() ?? string.Empty,
                 };
-                redisService.Set15P(cache_name, JsonConvert.SerializeObject(registrationRecord), Convert.ToInt32(_configuration["Redis:Database:db_common"]));
 
-                var InsertMG = await _mongoService.Insert(registrationRecord);
-                if (InsertMG == 0)
+                var message = new RegistrationQueueMessage
                 {
-                    InsertMG = await _mongoService.Insert(registrationRecord);
+                    MessageId = Guid.NewGuid(),
+                    Site = _registrationOptions.Site,
+                    LocationType = _registrationOptions.LocationType,
+                    BusinessDate = window.BusinessDate.ToString("yyyy-MM-dd"),
+                    QueueNumber = registrationRecord.QueueNumber,
+                    RegistrationTime = registrationRecord.RegistrationTime,
+                    PlateNumber = registrationRecord.PlateNumber,
+                    PhoneNumber = registrationRecord.PhoneNumber,
+                    Name = registrationRecord.Name,
+                    GPLX = registrationRecord.GPLX,
+                    Referee = registrationRecord.Referee,
+                    Camp = registrationRecord.Camp,
+                    ZaloStatus = registrationRecord.ZaloStatus
+                };
+
+                if (!_queuePublisher.Publish(message))
+                {
+                    await _pendingStore.PushAsync(message);
+                    _logger.LogWarning("Publish lỗi, đã lưu outbox: {MessageId} - số {QueueNumber}", message.MessageId, message.QueueNumber);
                 }
-               
-               
+
+                var insertMongo = await _mongoService.Insert(registrationRecord);
+                if (insertMongo == 0)
+                {
+                    await _mongoService.Insert(registrationRecord);
+                }
+
                 await _hubContext.Clients.All.SendAsync("ReceiveRegistration_FE", registrationRecord);
-               
-                stopwatch.Stop(); // Dừng đo thời gian
-                
+
+                stopwatch.Stop();
                 if (stopwatch.ElapsedMilliseconds > 1000)
                 {
-                    LogHelper.InsertLogTelegram("TG sử lý " + request.PlateNumber + ": " + stopwatch.ElapsedMilliseconds    );
-                    var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
-                    if (!Directory.Exists(logDirectory))
-                    {
-                        Directory.CreateDirectory(logDirectory);
-                    }
-                    var logMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] SLOW: {stopwatch.ElapsedMilliseconds}ms - Plate: {request.PlateNumber}";                  
-                    var logPath = Path.Combine(logDirectory, "slow_requests.log");
-                    using (var fs = new FileStream(logPath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite))
-                    using (var writer = new StreamWriter(fs))
-                    {
-                        writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {logMessage}");
-                    }
+                    LogSlowRequest(plateNumber, stopwatch.ElapsedMilliseconds);
                 }
-                await _insertQueue.EnqueueAsync(new InsertJob
-                {
-                    Data = new CarRegistrationResponse
-                    {
-                        Camp = registrationRecord.Camp,
-                        GPLX = registrationRecord.GPLX,
-                        Name = registrationRecord.Name,
-                        PlateNumber = registrationRecord.PlateNumber,
-                        PhoneNumber = registrationRecord.PhoneNumber,
-                        QueueNumber = registrationRecord.QueueNumber,
-                        Referee = registrationRecord.Referee,
-                        RegistrationTime = registrationRecord.RegistrationTime,
-                        ZaloStatus = registrationRecord.ZaloStatus,
-                        LocationType=3,
-                    }
-                });
-                // Return success response
+
                 return Ok(new CarRegistrationResponse
                 {
                     Success = true,
                     Message = "Đăng ký thành công!",
-                    QueueNumber = queueNumber,
+                    QueueNumber = registrationRecord.QueueNumber,
                     RegistrationTime = registrationRecord.RegistrationTime,
                     PlateNumber = registrationRecord.PlateNumber,
                     PhoneNumber = registrationRecord.PhoneNumber,
-                    ZaloStatus = "Đang xử lý...",
-
+                    ZaloStatus = registrationRecord.ZaloStatus,
                 });
             }
             catch (Exception ex)
             {
-                LogHelper.InsertLogTelegram("CarRegistrationController - RegisterCarV2: " + ex.Message);
+                _ = Task.Run(() => LogHelper.InsertLogTelegram("CarRegistrationController - RegisterCarV2: " + ex.Message));
                 _logger.LogError(ex, "Error processing car registration");
                 return StatusCode(500, new CarRegistrationResponse
                 {
@@ -340,50 +343,33 @@ namespace XTECH_FRONTEND.Controllers.CarRegistration
                 });
             }
         }
-        [HttpPost("insert")]
-        public async Task<ActionResult<object>> Insert([FromBody] CarRegistrationResponse request)
+
+        private string GetClientIp()
+        {
+            var forwardedFor = Request.Headers["X-Forwarded-For"].ToString();
+            if (!string.IsNullOrWhiteSpace(forwardedFor))
+            {
+                return forwardedFor.Split(',')[0].Trim();
+            }
+            return HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        }
+
+        private void LogSlowRequest(string plateNumber, long elapsedMilliseconds)
         {
             try
             {
-                var message = $"✅ ĐĂNG KÝ XE THÀNH CÔNG!\n\n" +
-                $" Tên khách hàng: {request.Name}\n" +
-                $"📱 Số điện thoại: {request.PhoneNumber}\n" +
-                $"🚗 Biển số xe: {request.PlateNumber}\n" +
-                $"🚗 Trọng tải xe: {request.Referee}\n" +
-                $"🎫 Hoàn hảo/Trại : {request.GPLX}\n" +
-                $"🎫 Số thứ tự của bạn: {request.QueueNumber:D3}\n" +
-                $"⏰ Thời gian đăng ký: {request.RegistrationTime:dd/MM/yyyy HH:mm}\n\n" +
-                $"📍 VUI LÒNG:\n" +
-                $"• Chuẩn bị đầy đủ giấy tờ xe\n" +
-                $"• Có mặt đúng giờ theo thứ tự\n" +
-                $"• Theo dõi cập nhật qua Zalo\n\n" +
-                $"🔔 Chúng tôi sẽ thông báo khi đến lượt bạn!\n\n" +
-                $"📞 Hotline hỗ trợ: 1900-1234\n" +
-                $"🌐 Website: https://cargilllongan.com\n\n" +
-                $"Cảm ơn bạn đã sử dụng dịch vụ! ";
-                string url = "http://api.longancargill.com/api/vehicleInspection/Insert";
-                var client = new HttpClient();
-                var request_api = new HttpRequestMessage(HttpMethod.Post, url);
-                request_api.Content = new StringContent(JsonConvert.SerializeObject(request), null, "application/json");
-                var response = await client.SendAsync(request_api);
-                if (response.IsSuccessStatusCode)
-                {
-                    var responseContent = await response.Content.ReadAsStringAsync();
-                }
-                else
-                {
-                    LogHelper.InsertLogTelegram("Insert - lỗi " );
-                }
-                LogHelper.InsertLogTelegram(message);
-                return StatusCode(200, "thành công");
+                var logDirectory = Path.Combine(Directory.GetCurrentDirectory(), "Logs");
+                Directory.CreateDirectory(logDirectory);
+                var logPath = Path.Combine(logDirectory, "slow_requests.log");
+                using var fs = new FileStream(logPath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite);
+                using var writer = new StreamWriter(fs);
+                writer.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - SLOW: {elapsedMilliseconds}ms - Plate: {plateNumber}");
             }
             catch (Exception ex)
             {
-                LogHelper.InsertLogTelegram("CarRegistrationController - GetQueueStatus: " + ex.Message);
-                _logger.LogError(ex, "Error getting queue status");
-                return StatusCode(500, "Lỗi hệ thống");
+                _logger.LogWarning(ex, "Không ghi được slow_requests.log");
             }
+            _ = Task.Run(() => LogHelper.InsertLogTelegram("TG xử lý " + plateNumber + ": " + elapsedMilliseconds + "ms"));
         }
-
     }
 }

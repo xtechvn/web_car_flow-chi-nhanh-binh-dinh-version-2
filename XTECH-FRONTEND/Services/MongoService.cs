@@ -14,19 +14,19 @@ namespace XTECH_FRONTEND.Services
     {
 
         private readonly IConfiguration _configuration;
+        // MongoClient tự quản lý connection pool, phải dùng chung 1 instance cho cả app
+        private readonly MongoClient _client;
         public MongoService(IConfiguration configuration)
         {
             _configuration = configuration;
-
+            string url = "mongodb://" + _configuration["MongoServer:user"] + ":" + _configuration["MongoServer:pwd"] + "@" + _configuration["MongoServer:Host"] + ":" + _configuration["MongoServer:Port"];
+            _client = new MongoClient(url);
         }
         public async Task<long> Insert(RegistrationRecord model)
         {
             try
             {
-                string url = "mongodb://" + _configuration["MongoServer:user"] + ":" + _configuration["MongoServer:pwd"] + "@" + _configuration["MongoServer:Host"] + ":" + _configuration["MongoServer:Port"] ;
-                var client = new MongoClient(url);
-
-                IMongoDatabase db = client.GetDatabase(_configuration["MongoServer:catalog_log"]);
+                IMongoDatabase db = _client.GetDatabase(_configuration["MongoServer:catalog_log"]);
                 RegistrationRecord log = new RegistrationRecord()
                 {
                     _id = ObjectId.GenerateNewId().ToString(),
@@ -56,10 +56,7 @@ namespace XTECH_FRONTEND.Services
             var list_data = new List<RegistrationRecord>();
             try
             {
-                string url = "mongodb://" + _configuration["MongoServer:user"] + ":" + _configuration["MongoServer:pwd"] + "@" + _configuration["MongoServer:Host"] + ":" + _configuration["MongoServer:Port"] + "/" + _configuration["MongoServer:catalog_log"];
-                var client = new MongoClient(url);
-
-                IMongoDatabase db = client.GetDatabase(_configuration["MongoServer:catalog_log"]);
+                IMongoDatabase db = _client.GetDatabase(_configuration["MongoServer:catalog_log"]);
 
                 var todayStart = DateTime.Today;
                 var cutoffTime = todayStart.AddHours(18);
@@ -88,9 +85,7 @@ namespace XTECH_FRONTEND.Services
             {
                 var now = DateTime.Now;
                 var expireAt = new DateTime(now.Year, now.Month, now.Day, 17, 55, 0);
-                string url = "mongodb://" + _configuration["MongoServer:user"] + ":" + _configuration["MongoServer:pwd"] + "@" + _configuration["MongoServer:Host"] + ":" + _configuration["MongoServer:Port"] ;
-                var client = new MongoClient(url);
-                IMongoDatabase db = client.GetDatabase(_configuration["MongoServer:catalog_log"]);
+                IMongoDatabase db = _client.GetDatabase(_configuration["MongoServer:catalog_log"]);
       
                 var collection = db.GetCollection<RegistrationRecordMongo>(_configuration["MongoServer:Data_Car"]);
                 var filter = Builders<RegistrationRecordMongo>.Filter.Empty;

@@ -399,43 +399,5 @@ namespace XTECH_FRONTEND.Repositories
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-        public async Task<int> GetDailyQueueCountRedis(DateTime? time)
-        {
-            try
-            {
-                var redis = ConnectionMultiplexer.Connect(_configuration["Redis:Host"] +":"+_configuration["Redis:Port"]);
-                var db = redis.GetDatabase();
-                // Tính effective date dựa trên giờ địa phương (UTC+7)
-                DateTime now = DateTime.Now; // Sử dụng giờ hệ thống (giả định đã cấu hình đúng timezone)
-                string key = $"counter:daily_car_count_Pro_Binh_Dinh";
-             
-                long nextNumber = db.StringIncrement(key);
-                var datetime_5p= time?.AddMinutes(-5);
-                // Đặt TTL nếu là lần đầu tăng
-                // 🔹 1. Nếu có time truyền vào → xử lý reset theo time
-                if (nextNumber == 1)
-                {
-                    // Mục tiêu: 18 hôm nay
-                    DateTime expireAt = new DateTime(now.Year, now.Month, now.Day, datetime_5p.Value.Hour, datetime_5p.Value.Minute, 00);
-
-                    // Nếu đã quá 18 hôm nay → chuyển sang 18 ngày mai
-                    if (now > expireAt)
-                    {
-                        expireAt = expireAt.AddDays(1);
-                    }
-
-                    TimeSpan ttl = expireAt - now;
-                    db.KeyExpire(key, ttl);
-                }
-                Console.WriteLine($"Số thứ tự tiếp theo: {nextNumber}");
-                return (int)nextNumber;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting daily queue count from Google Sheets");
-
-                throw;
-            }
-        }
     }
 }

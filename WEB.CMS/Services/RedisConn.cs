@@ -13,6 +13,7 @@ namespace WEB.CMS.Services
         // private readonly int _db_index;        
 
         private ConnectionMultiplexer _redis;
+        private readonly object _connectLock = new object();
         public RedisConn(IConfiguration config)
         {
             _redisHost = config["Redis:Host"];
@@ -59,17 +60,47 @@ namespace WEB.CMS.Services
         }
         public void Connect()
         {
-            try
+            // Singleton dùng chung cho subscriber và API: chỉ tạo 1 ConnectionMultiplexer, multiplexer tự reconnect
+            lock (_connectLock)
             {
-                var configString = $"{_redisHost}:{_redisPort},connectRetry=5,allowAdmin=true";
-                _redis = ConnectionMultiplexer.Connect(configString);
-            }
-            catch (RedisConnectionException err)
-            {
-                LogHelper.InsertLogTelegram("Redis Connection Error: " + err.Message);
-                // throw err;
+                if (_redis != null) return;
+                try
+                {
+                    var configString = $"{_redisHost}:{_redisPort},connectRetry=5,allowAdmin=true,abortConnect=false";
+                    _redis = ConnectionMultiplexer.Connect(configString);
+                }
+                catch (RedisConnectionException err)
+                {
+                    LogHelper.InsertLogTelegram("Redis Connection Error: " + err.Message);
+                    // throw err;
+                }
             }
             // Log.Debug("Connected to Redis");
+        }
+
+        public bool EnsureConnected()
+        {
+            if (_redis == null) Connect();
+            return _redis != null && _redis.IsConnected;
+        }
+
+        /// <summary>SET key value NX EX: true nếu key chưa tồn tại và đã được ghi.</summary>
+        public async Task<bool> SetIfNotExistsAsync(string key, string value, TimeSpan expiry, int db_index)
+        {
+            var db = _redis.GetDatabase(db_index);
+            return await db.StringSetAsync(key, value, expiry, When.NotExists);
+        }
+
+        public async Task SetAsync(string key, string value, TimeSpan expiry, int db_index)
+        {
+            var db = _redis.GetDatabase(db_index);
+            await db.StringSetAsync(key, value, expiry);
+        }
+
+        public async Task<bool> DeleteAsync(string key, int db_index)
+        {
+            var db = _redis.GetDatabase(db_index);
+            return await db.KeyDeleteAsync(key);
         }
 
         public void Set(string key, string value, int db_index)

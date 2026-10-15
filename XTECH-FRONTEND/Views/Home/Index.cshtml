@@ -151,7 +151,8 @@
     <script type="text/javascript" src="~/libs/jquery/jquery-3.6.0.min.js"></script>
     <script>
         // API Configuration
-        const API_BASE_URL = 'https://cargillbinhdinh.com/api'; // Change to your API URL
+        // Gọi về chính server đang phục vụ trang (không trỏ cứng domain site khác)
+        const API_BASE_URL = '/api';
         const ENDPOINTS = {
             REGISTER: '/carregistration/registerV2',
             QUEUE_STATUS: '/carregistration/queue-status',
@@ -444,8 +445,10 @@
             } catch (error) {
                 console.error('Registration error:', error);
 
-                // Parse specific error messages
-                let errorMessage = 'Có lỗi xảy ra, vui lòng thử lại sau!';
+                // Ưu tiên hiển thị thông báo server trả về (chốt sổ, sai định dạng, trùng biển số...)
+                let errorMessage = error.message && !error.message.startsWith('HTTP')
+                    ? error.message
+                    : 'Có lỗi xảy ra, vui lòng thử lại sau!';
 
                 if (error.message.includes('15 phút') || error.message.includes('đợi')) {
                     errorMessage = error.message;

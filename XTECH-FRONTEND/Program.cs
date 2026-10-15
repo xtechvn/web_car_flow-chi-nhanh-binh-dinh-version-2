@@ -1,10 +1,12 @@
 ﻿//https://learn.microsoft.com/vi-vn/aspnet/core/tutorials/first-mvc-app/adding-controller?view=aspnetcore-6.0&tabs=visual-studio
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Caching.Memory;
+using StackExchange.Redis;
 using XTECH_FRONTEND.IRepositories;
 using XTECH_FRONTEND.Repositories;
 using XTECH_FRONTEND.Services;
-using XTECH_FRONTEND.Services.BackgroundQueue;
+using XTECH_FRONTEND.Services.Queue;
+using XTECH_FRONTEND.Services.Registration;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,10 +36,28 @@ builder.Services.AddSingleton<IValidationService, ValidationService>();
 builder.Services.AddSingleton<IMemoryCache, MemoryCache>();
 builder.Services.AddSingleton<IZaloService, ZaloOfficialAccountService>();
 builder.Services.AddSingleton<IMongoService, MongoService>();
-builder.Services.AddSingleton<IMongoService, MongoService>();
-builder.Services.AddSingleton<IInsertQueue, InsertQueue>();
-builder.Services.AddHostedService<InsertWorker>();
-builder.Services.AddHttpClient("InsertClient");
+
+// Đăng ký xe: cấp số bằng Redis, đẩy dữ liệu vào RabbitMQ (không gọi API ngoài nữa)
+builder.Services.Configure<RegistrationOptions>(builder.Configuration.GetSection(RegistrationOptions.SectionName));
+builder.Services.PostConfigure<RegistrationOptions>(options =>
+{
+    if (int.TryParse(builder.Configuration["Redis:Database:db_common"], out var db))
+    {
+        options.RedisDb = db;
+    }
+});
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
+{
+    var redisOptions = ConfigurationOptions.Parse($"{builder.Configuration["Redis:Host"]}:{builder.Configuration["Redis:Port"]}");
+    redisOptions.AbortOnConnectFail = false;
+    redisOptions.ConnectRetry = 5;
+    return ConnectionMultiplexer.Connect(redisOptions);
+});
+builder.Services.AddSingleton<IRegistrationScheduleService, RegistrationScheduleService>();
+builder.Services.AddSingleton<IQueueNumberAllocator, RedisQueueNumberAllocator>();
+builder.Services.AddSingleton<IRegistrationQueuePublisher, RabbitMqRegistrationPublisher>();
+builder.Services.AddSingleton<PendingRegistrationStore>();
+builder.Services.AddHostedService<PendingRegistrationRepublisher>();
 // Add SignalR với cấu hình KeepAlive
 builder.Services.AddSignalR(options =>
 {

@@ -1,43 +1,26 @@
-﻿using Entities.ViewModels;
-using Google.Apis.Sheets.v4.Data;
-using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using RabbitMQ.Client;
-using System.Collections.Generic;
+﻿using Microsoft.AspNetCore.Mvc;
 using System.Text.Encodings.Web;
-using System.Xml.Linq;
 using XTECH_FRONTEND.IRepositories;
-using XTECH_FRONTEND.Model;
-using XTECH_FRONTEND.Utilities;
+using XTECH_FRONTEND.Services.Registration;
 
 namespace XTECH_FRONTEND.Controllers
 {
     public class HomeController : Controller
     {
         private readonly IMongoService _mongoService;
-        public HomeController(IMongoService mongoService)
+        private readonly IRegistrationScheduleService _scheduleService;
+        public HomeController(IMongoService mongoService, IRegistrationScheduleService scheduleService)
         {
             _mongoService = mongoService;
+            _scheduleService = scheduleService;
         }
         // GET: /home/
         public async Task<IActionResult> Index()
         {
-            var request = new CarRegistrationResponse();
-            string url = "http://api.longancargill.com/api/vehicleInspection/get-time-countdown?LocationType=3";
-            var client = new HttpClient();
-            var request_api = new HttpRequestMessage(HttpMethod.Get, url);
-            var response = await client.SendAsync(request_api);
-            if (response.IsSuccessStatusCode)
-            {
-                var text = response.Content.ReadAsStringAsync().Result;
-                var result = JsonConvert.DeserializeObject<ApiCountdownModel>(text);
-                ViewBag.Data = result.data;
-            }
-            else
-            {
-                LogHelper.InsertLogTelegram("Insert - lỗi ");
-            }
-            return View();           
+            // Giờ reset lấy từ AllCode.TIME_RESET (CMS cấu hình), view dùng để khóa form trước giờ chốt sổ
+            var resetTime = await _scheduleService.GetTodayResetTimeAsync();
+            ViewBag.Data = resetTime.ToString("dd/MM/yyyy HH:mm:ss");
+            return View();
         }
         public IActionResult ListData()
         {
