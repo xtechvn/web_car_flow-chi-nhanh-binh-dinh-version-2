@@ -1,5 +1,6 @@
 using DAL;
 using Entities.ConfigModels;
+using Entities.ViewModels.Car;
 using Entities.ViewModels.ObdConfig;
 using Microsoft.Extensions.Options;
 using OfficeOpenXml;
@@ -200,6 +201,58 @@ namespace Repositories.Repositories
             catch (Exception ex)
             {
                 LogHelper.InsertLogTelegram("GetHistory - ObdConfigRepository: " + ex);
+            }
+            return null;
+        }
+
+        public async Task<List<ObdSuggestItem>> SuggestLatest(string keyword, int top = 20)
+        {
+            try
+            {
+                return await _obdConfigDAL.SuggestLatest(keyword, top);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("SuggestLatest - ObdConfigRepository: " + ex);
+            }
+            return new List<ObdSuggestItem>();
+        }
+
+        public async Task<List<VehicleInspectionObdModel>> GetByVehicleIds(IEnumerable<int> vehicleIds)
+        {
+            try
+            {
+                return await _obdConfigDAL.GetByVehicleIds(vehicleIds);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("GetByVehicleIds - ObdConfigRepository: " + ex);
+            }
+            return new List<VehicleInspectionObdModel>();
+        }
+
+        public async Task<VehicleInspectionObdSaveResult> AttachToVehicle(int vehicleInspectionId, long obdId, int userId)
+        {
+            try
+            {
+                return await _obdConfigDAL.AttachToVehicle(vehicleInspectionId, obdId, userId);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("AttachToVehicle - ObdConfigRepository: " + ex);
+            }
+            return null;
+        }
+
+        public async Task<VehicleInspectionObdSaveResult> DetachFromVehicle(int vehicleInspectionId, long obdId)
+        {
+            try
+            {
+                return await _obdConfigDAL.DetachFromVehicle(vehicleInspectionId, obdId);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("DetachFromVehicle - ObdConfigRepository: " + ex);
             }
             return null;
         }

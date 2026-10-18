@@ -3,90 +3,244 @@
 @{
     Layout = null;
     var AllCode = (List<AllCode>)ViewBag.AllCode;
+    var GoodsTypeCodes = ViewBag.GoodsTypeCodes as List<AllCode> ?? new List<AllCode>();
+    var isProcessed = ViewBag.type != null && (int)ViewBag.type == 1;
+    var vi = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+    const int GOODS_BAG = 0;  // Hàng bao
+    const int GOODS_BULK = 1; // Hàng xá
+    // Label Unicode cố định — tránh Description AllCode bị lỗi encoding (HÃ ng bao)
+    string GoodsTypeLabel(int? code) => code switch
+    {
+        GOODS_BAG => "Hàng bao",
+        GOODS_BULK => "Hàng xá",
+        _ => ""
+    };
 }
 @model List<CartoFactoryModel>
-@if (Model != null && Model.Count > 0)
-{
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>STT</th>
-                <th>Giờ đăng ký online</th>
-                <th>Biển số xe</th>
-                <th>Tên khách hàng (Trại, đại lý)</th>
-                <th>Tên lái xe</th>
-                <th>Số điện thoại</th>
-                <th>Nhóm tài</th>
-                <th>Tải trọng xe vào (kg)</th>
-                <th>Tình trạng </th>
-            </tr>
-        </thead>
-        <tbody id="dataBody-@ViewBag.type">
-            @foreach (var item in Model)
+<table class="data-table weighed-input-table">
+    <thead>
+        <tr>
+            <th class="text-right">STT</th>
+            <th class="text-left">Giờ xử lý đăng tải</th>
+            <th class="text-left">Biển số xe</th>
+            <th class="obd-col col-auto-obd text-left">OBD/Tải trọng (kg)</th>
+            <th class="col-user-input text-right">Net cân đầu vào / các lần cân (kg)</th>
+            <th class="text-left col-auto-obd th-stack">Ship-to Party<br /><span class="th-sub">(Theo OBD)</span></th>
+            <th class="col-auto-obd th-stack text-right">Net Weight<br /><span class="th-sub">(Theo OBD)</span></th>
+            <th class="col-auto-obd th-stack text-right">Tải trọng xe<br /><span class="th-sub">(Theo đăng kiểm)</span></th>
+            <th class="col-auto-obd text-right">Check tải trọng (kg)</th>
+            <th class="col-user-input text-left">Nhóm tài</th>
+            <th class="col-user-input text-left">Ghi chú</th>
+            <th class="col-user-input text-left">Loại hàng / Tiến độ</th>
+            <th class="col-user-input text-left">Tình trạng</th>
+        </tr>
+    </thead>
+    <tbody id="dataBody-@ViewBag.type">
+        @if (Model != null && Model.Count > 0)
+        {
+            foreach (var item in Model)
             {
-                <tr class="CartoFactory_@item.Id" data-queue="@(((DateTime)item.VehicleWeighingTimeComeIn).ToString("HH:mm dd/MM/yyyy"))" data-LoadType="@item.LoadType">
-                    <td>@item.RecordNumber</td>
-                    <td>@(((DateTime)item.RegisterDateOnline).ToString("HH:mm dd/MM/yyyy"))</td>
-                    <td>
-                        @item.VehicleNumber
-                    </td>
-                    <td>@item.CustomerName</td>
-                    <td>@item.DriverName</td>
-                    <td>@item.PhoneNumber</td>
-
-                    <td>@item.LoadTypeName</td>
-                    <td>
-                        @if (ViewBag.type == 1)
+                var processTime = item.ProcessingIsLoadingDate
+                    ?? item.VehicleWeighingTimeComeIn
+                    ?? item.RegisterDateOnline;
+                var queueVal = processTime != null ? ((DateTime)processTime).ToString("HH:mm dd/MM/yyyy") : "";
+                var obdList = item.ObdList ?? new List<VehicleInspectionObdModel>();
+                var obdTotal = obdList.Sum(x => x.NetWeight);
+                var check = item.VehicleWeightMax - obdTotal;
+                var checkClass = check < 0 ? "check-load is-warn" : "check-load";
+                var isBulk = item.GoodsType == GOODS_BULK;
+                var skus = item.WeighInSkuList ?? new List<VehicleWeighInSkuModel>();
+                <tr class="CartoFactory_@item.Id"
+                    data-queue="@queueVal"
+                    data-LoadType="@item.LoadType"
+                    data-goods-type="@(item.GoodsType?.ToString() ?? "")"
+                    data-weight-max="@item.VehicleWeightMax.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                    data-vehicle-id="@item.Id">
+                    <td class="text-right">@item.RecordNumber</td>
+                    <td class="text-left">@queueVal</td>
+                    <td class="text-left">@item.VehicleNumber</td>
+                    <td class="obd-col col-auto-obd text-left">
+                        @if (isProcessed)
                         {
-                            @(item.VehicleWeightIn != null ? item.VehicleWeightIn.Value.ToString("N0"):"0")
+                            <div class="obd-token is-readonly" data-vehicle-id="@item.Id">
+                                <div class="obd-token__total">Tổng: <b class="obd-token__total-value">@obdTotal.ToString("#,##0.###", vi)</b> kg</div>
+                                <div class="obd-token__chips">
+                                    @foreach (var obd in obdList)
+                                    {
+                                        var nwVi = obd.NetWeight.ToString("#,##0.###", vi);
+                                        <span class="obd-token__chip" data-obd-id="@obd.ObdId" data-delivery="@obd.Delivery" data-net-weight="@obd.NetWeightText" title="Net Weight: @nwVi kg">
+                                            <span class="obd-token__chip-text">@obd.Delivery: @nwVi kg</span>
+                                        </span>
+                                    }
+                                </div>
+                            </div>
                         }
                         else
                         {
-                            <input type="text" class="input-form VehicleWeightIn currency" maxlength="8" 
-                                   value="@(item.VehicleWeightIn >0?((decimal)item.VehicleWeightIn).ToString("N0"):"")"
-                                   data-original="@(item.VehicleWeightIn >0?((decimal)item.VehicleWeightIn).ToString("N0"):"")"
-                                   data-id="@item.Id"
-                                   oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);" />
+                            <div class="obd-token" data-vehicle-id="@item.Id">
+                                <div class="obd-token__total">Tổng: <b class="obd-token__total-value">@obdTotal.ToString("#,##0.###", vi)</b> kg</div>
+                                <div class="obd-token__chips">
+                                    @foreach (var obd in obdList)
+                                    {
+                                        var nwVi = obd.NetWeight.ToString("#,##0.###", vi);
+                                        <span class="obd-token__chip" data-obd-id="@obd.ObdId" data-delivery="@obd.Delivery" data-net-weight="@obd.NetWeightText" title="Net Weight: @nwVi kg">
+                                            <span class="obd-token__chip-text">@obd.Delivery: @nwVi kg</span>
+                                            <button type="button" class="obd-token__chip-remove" title="Gỡ">&times;</button>
+                                        </span>
+                                    }
+                                </div>
+                                <span class="obd-token__input-wrap">
+                                    <input type="text" class="obd-token__input" placeholder="Nhập mã OBD" inputmode="numeric" autocomplete="off" maxlength="18" />
+                                    <button type="button" class="obd-token__input-clear" title="Xóa" style="display:none;">&times;</button>
+                                </span>
+                                <div class="obd-token__dropdown" style="display:none;"></div>
+                            </div>
                         }
                     </td>
-                    <td>
+                    <td class="col-user-input weigh-in-cell text-right@(isProcessed ? " is-processed" : "")">
+                        <div class="sku-panel @(isBulk ? "is-bulk" : "is-bag")" data-vehicle-id="@item.Id">
+                            <div class="sku-single" style="@(isBulk ? "display:none" : "")">
+                                @if (isProcessed)
+                                {
+                                    @(item.VehicleWeightIn != null ? item.VehicleWeightIn.Value.ToString("N0") : "0")
+                                }
+                                else
+                                {
+                                    <input type="text" class="input-form VehicleWeightIn currency" maxlength="8"
+                                           value="@(item.VehicleWeightIn > 0 ? ((decimal)item.VehicleWeightIn).ToString("N0") : "")"
+                                           data-original="@(item.VehicleWeightIn > 0 ? ((decimal)item.VehicleWeightIn).ToString("N0") : "")"
+                                           data-id="@item.Id"
+                                           oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);" />
+                                }
+                            </div>
+                            <div class="sku-multi" style="@(isBulk ? "" : "display:none")">
+                                <div class="sku-list">
+                                    @foreach (var sku in skus.OrderBy(x => x.SkuLine))
+                                    {
+                                        <div class="sku-row" data-sku-id="@sku.Id">
+                                            <span class="sku-label">SKU @sku.SkuLine</span>
+                                            @if (isProcessed)
+                                            {
+                                                <span class="sku-weight-ro">@(((decimal)sku.Weight).ToString("N0"))</span>
+                                            }
+                                            else
+                                            {
+                                                <input type="text" class="input-form sku-weight currency" inputmode="numeric"
+                                                       value="@(sku.Weight > 0 ? ((decimal)sku.Weight).ToString("N0") : "")"
+                                                       data-sku-id="@sku.Id"
+                                                       placeholder="Cân nặng (kg)" />
+                                                <button type="button" class="sku-remove" title="Xóa SKU">&times;</button>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                                @if (!isProcessed)
+                                {
+                                    <button type="button" class="sku-add">+ Thêm SKU</button>
+                                }
+                                <div class="sku-total">Tổng: <b class="sku-total-value">@skus.Sum(x => x.Weight).ToString("N0")</b> kg</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="name-td text-left ship-to-party col-auto-obd">
+                        @if (obdList.Count == 0)
+                        {
+                            <div class="stack-line">@item.CustomerName</div>
+                        }
+                        else
+                        {
+                            foreach (var obd in obdList)
+                            {
+                                <div class="stack-line" title="@obd.Delivery">@item.CustomerName</div>
+                            }
+                        }
+                    </td>
+                    <td class="col-auto-obd obd-net-weight-stack text-right">
+                        @if (obdList.Count == 0)
+                        {
+                            <div class="stack-line">0</div>
+                        }
+                        else
+                        {
+                            foreach (var obd in obdList)
+                            {
+                                <div class="stack-line">@obd.NetWeight.ToString("#,##0.###", vi)</div>
+                            }
+                        }
+                    </td>
+                    <td class="col-auto-obd vehicle-weight-max-stack text-right">
+                        @if (obdList.Count == 0)
+                        {
+                            <div class="stack-line">@item.VehicleWeightMax.ToString("#,##0.###", vi)</div>
+                        }
+                        else
+                        {
+                            foreach (var _ in obdList)
+                            {
+                                <div class="stack-line">@item.VehicleWeightMax.ToString("#,##0.###", vi)</div>
+                            }
+                        }
+                    </td>
+                    <td class="@checkClass col-auto-obd text-right" data-check>@check.ToString("#,##0.###", vi)</td>
+                    <td class="col-user-input text-left">@item.LoadTypeName</td>
+                    <td class="note-cell col-user-input text-left">
+                        @if (isProcessed)
+                        {
+                            @(item.Note ?? "")
+                        }
+                        else
+                        {
+                            <textarea class="WI_Note" name="WI_Note" data-id="@item.Id" rows="2" placeholder="Ghi chú">@(item.Note ?? "")</textarea>
+                        }
+                    </td>
+                    <td class="goods-type-cell col-user-input text-left">
+                        @if (isProcessed)
+                        {
+                            <div>@GoodsTypeLabel(item.GoodsType)</div>
+                            @if (isBulk)
+                            {
+                                <div class="goods-type-progress">@skus.Count SKU</div>
+                            }
+                        }
+                        else
+                        {
+                            <select class="goods-type-select input-form" data-id="@item.Id">
+                                <option value="">-- Chọn --</option>
+                                @if (item.GoodsType == GOODS_BAG)
+                                {
+                                    <option value="@GOODS_BAG" selected="selected">Hàng bao</option>
+                                    <option value="@GOODS_BULK">Hàng xá</option>
+                                }
+                                else if (item.GoodsType == GOODS_BULK)
+                                {
+                                    <option value="@GOODS_BAG">Hàng bao</option>
+                                    <option value="@GOODS_BULK" selected="selected">Hàng xá</option>
+                                }
+                                else
+                                {
+                                    <option value="@GOODS_BAG">Hàng bao</option>
+                                    <option value="@GOODS_BULK">Hàng xá</option>
+                                }
+                            </select>
+                            <div class="goods-type-progress muted" data-progress>
+                                @(isBulk ? (skus.Count + " SKU") : "Tiến độ: —")
+                            </div>
+                        }
+                    </td>
+                    <td class="col-user-input text-left">
                         <div class="status-dropdown">
-                            <button class="dropdown-toggle " data-options='[
+                            <button class="dropdown-toggle" data-options='[
                             @foreach (var allcode in AllCode)
                             {
-
                                 @:{"text":"@allcode.Description","value":"@allcode.CodeValue"}@(allcode != AllCode.Last() ? "," : "")
-
                             }
-                                                ]'>
+                            ]'>
                                 @item.VehicleWeighedstatusName
                             </button>
                         </div>
                     </td>
                 </tr>
             }
-
-        </tbody>
-    </table>
-}
-else
-{
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>STT</th>
-                <th>Giờ đăng ký online</th>
-                <th>Biển số xe</th>
-                <th>Tên khách hàng (Trại, đại lý)</th>
-                <th>Tên lái xe</th>
-                <th>Số điện thoại</th>
-                <th>Nhóm tài</th>
-                <th>Tải trọng xe (kg)</th>
-                <th>Tình trạng xe</th>
-            </tr>
-        </thead>
-        <tbody id="dataBody-@ViewBag.type">
-        </tbody>
-    </table>
-}
-
+        }
+    </tbody>
+</table>

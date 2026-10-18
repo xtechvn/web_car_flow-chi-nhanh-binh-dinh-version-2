@@ -1,4 +1,5 @@
 using DAL.StoreProcedure;
+using Entities.ViewModels.Car;
 using Entities.ViewModels.ObdConfig;
 using Microsoft.Data.SqlClient;
 using System;
@@ -200,6 +201,101 @@ namespace DAL
                 LogHelper.InsertLogTelegram("GetListLog - ObdConfigDAL: " + ex);
             }
             return new List<ObdConfigLogModel>();
+        }
+
+        public async Task<List<ObdSuggestItem>> SuggestLatest(string keyword, int top = 20)
+        {
+            try
+            {
+                SqlParameter[] objParam = new SqlParameter[]
+                {
+                    new SqlParameter("@Keyword", string.IsNullOrWhiteSpace(keyword) ? DBNull.Value : keyword.Trim()),
+                    new SqlParameter("@Top", top),
+                };
+                var dt = _DbWorker.GetDataTable(StoreProcedureConstant.SP_SuggestObdConfigLatest, objParam);
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    return dt.ToList<ObdSuggestItem>();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("SuggestLatest - ObdConfigDAL: " + ex);
+            }
+            return new List<ObdSuggestItem>();
+        }
+
+        public async Task<List<VehicleInspectionObdModel>> GetByVehicleIds(IEnumerable<int> vehicleIds)
+        {
+            try
+            {
+                var ids = vehicleIds?.Where(x => x > 0).Distinct().ToList();
+                if (ids == null || ids.Count == 0) return new List<VehicleInspectionObdModel>();
+
+                SqlParameter[] objParam = new SqlParameter[]
+                {
+                    new SqlParameter("@Ids", string.Join(",", ids)),
+                };
+                var dt = _DbWorker.GetDataTable(StoreProcedureConstant.SP_GetVehicleInspectionObdByVehicleIds, objParam);
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    return dt.ToList<VehicleInspectionObdModel>();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("GetByVehicleIds - ObdConfigDAL: " + ex);
+            }
+            return new List<VehicleInspectionObdModel>();
+        }
+
+        public async Task<VehicleInspectionObdSaveResult> AttachToVehicle(int vehicleInspectionId, long obdId, int userId)
+        {
+            try
+            {
+                SqlParameter[] objParam = new SqlParameter[]
+                {
+                    new SqlParameter("@VehicleInspectionId", vehicleInspectionId),
+                    new SqlParameter("@ObdId", obdId),
+                    new SqlParameter("@UserId", userId),
+                };
+                var dt = _DbWorker.GetDataTable(StoreProcedureConstant.SP_InsertVehicleInspectionObd, objParam);
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    var row = dt.ToList<VehicleInspectionObdSaveResult>().First();
+                    row.ObdId = obdId;
+                    return row;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("AttachToVehicle - ObdConfigDAL: " + ex);
+            }
+            return null;
+        }
+
+        public async Task<VehicleInspectionObdSaveResult> DetachFromVehicle(int vehicleInspectionId, long obdId)
+        {
+            try
+            {
+                SqlParameter[] objParam = new SqlParameter[]
+                {
+                    new SqlParameter("@VehicleInspectionId", vehicleInspectionId),
+                    new SqlParameter("@ObdId", obdId),
+                };
+                var dt = _DbWorker.GetDataTable(StoreProcedureConstant.SP_DeleteVehicleInspectionObd, objParam);
+                if (dt != null && dt.Rows.Count > 0)
+                {
+                    var row = dt.ToList<VehicleInspectionObdSaveResult>().First();
+                    row.ObdId = obdId;
+                    return row;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("DetachFromVehicle - ObdConfigDAL: " + ex);
+            }
+            return null;
         }
     }
 }

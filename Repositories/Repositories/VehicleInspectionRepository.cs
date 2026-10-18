@@ -25,10 +25,12 @@ namespace Repositories.Repositories
     {
         private readonly VehicleInspectionDAL _VehicleInspectionDAL;
         private readonly AllCodeDAL _AllCodeDAL;
+        private readonly ObdConfigDAL _ObdConfigDAL;
         public VehicleInspectionRepository(IOptions<DataBaseConfig> dataBaseConfig)
         {
             _VehicleInspectionDAL = new VehicleInspectionDAL(dataBaseConfig.Value.SqlServer.ConnectionString);
             _AllCodeDAL = new AllCodeDAL(dataBaseConfig.Value.SqlServer.ConnectionString);
+            _ObdConfigDAL = new ObdConfigDAL(dataBaseConfig.Value.SqlServer.ConnectionString);
         }
         //danh sách xe đăng ký
         public async Task<List<CartoFactoryModel>> GetListRegisteredVehicle(CartoFactorySearchModel searchModel)
@@ -71,13 +73,35 @@ namespace Repositories.Repositories
 
                 searchModel.RegistrationTime = expireAt;
 
-                return await _VehicleInspectionDAL.GetListCartoFactory(searchModel);
+                var data = await _VehicleInspectionDAL.GetListCartoFactory(searchModel);
+                await AttachObdList(data);
+                return data;
             }
             catch (Exception ex)
             {
                 LogHelper.InsertLogTelegram("GetListCartoFactory - VehicleInspectionRepository: " + ex);
             }
             return null;
+        }
+
+        private async Task AttachObdList(List<CartoFactoryModel> data)
+        {
+            if (data == null || data.Count == 0) return;
+            var links = await _ObdConfigDAL.GetByVehicleIds(data.Select(x => x.Id));
+            var map = links.GroupBy(x => x.VehicleInspectionId).ToDictionary(g => g.Key, g => g.ToList());
+            foreach (var item in data)
+            {
+                if (map.TryGetValue(item.Id, out var list))
+                {
+                    item.ObdList = list;
+                    item.ObdDeliveriesText = string.Join(", ", list.Select(x => x.Delivery.ToString()));
+                }
+                else
+                {
+                    item.ObdList = new List<VehicleInspectionObdModel>();
+                    item.ObdDeliveriesText = "";
+                }
+            }
         }
         public async Task<int> UpdateCar(VehicleInspectionUpdateModel model)
         {
@@ -96,7 +120,12 @@ namespace Repositories.Repositories
         {
             try
             {
-                return await _VehicleInspectionDAL.GetDetailtVehicleInspection(id);
+                var detail = await _VehicleInspectionDAL.GetDetailtVehicleInspection(id);
+                if (detail != null)
+                {
+                    await AttachObdList(new List<CartoFactoryModel> { detail });
+                }
+                return detail;
             }
             catch (Exception ex)
             {
@@ -273,13 +302,54 @@ namespace Repositories.Repositories
                 var now = DateTime.Now;
                 var expireAt = new DateTime(now.Year, now.Month, now.Day, hours, minutes, 0);
                 searchModel.RegistrationTime = expireAt;
-                return await _VehicleInspectionDAL.GetListVehicleWeighedInput(searchModel);
+                var data = await _VehicleInspectionDAL.GetListVehicleWeighedInput(searchModel);
+                await AttachObdList(data);
+                await AttachWeighInSkuList(data);
+                return data;
             }
             catch (Exception ex)
             {
                 LogHelper.InsertLogTelegram("GetListVehicleWeighedInput - VehicleInspectionRepository: " + ex);
             }
             return null;
+        }
+
+        private async Task AttachWeighInSkuList(List<CartoFactoryModel> data)
+        {
+            if (data == null || data.Count == 0) return;
+            var links = await _VehicleInspectionDAL.GetWeighInSkuByVehicleIds(data.Select(x => x.Id));
+            var map = links.GroupBy(x => x.VehicleInspectionId).ToDictionary(g => g.Key, g => g.ToList());
+            foreach (var item in data)
+            {
+                item.WeighInSkuList = map.TryGetValue(item.Id, out var list)
+                    ? list
+                    : new List<VehicleWeighInSkuModel>();
+            }
+        }
+
+        public Task<List<VehicleWeighInSkuModel>> GetWeighInSkuByVehicleIds(IEnumerable<int> vehicleIds)
+        {
+            return _VehicleInspectionDAL.GetWeighInSkuByVehicleIds(vehicleIds);
+        }
+
+        public async Task<VehicleWeighInSkuModel> InsertWeighInSku(int vehicleInspectionId, decimal weight, int? userId)
+        {
+            return await _VehicleInspectionDAL.InsertWeighInSku(vehicleInspectionId, weight, userId);
+        }
+
+        public async Task<int> UpdateWeighInSku(long id, decimal weight, int? userId)
+        {
+            return await _VehicleInspectionDAL.UpdateWeighInSku(id, weight, userId);
+        }
+
+        public async Task<int> DeleteWeighInSku(long id)
+        {
+            return await _VehicleInspectionDAL.DeleteWeighInSku(id);
+        }
+
+        public async Task<int> ClearWeighInSkuByVehicleId(int vehicleInspectionId)
+        {
+            return await _VehicleInspectionDAL.ClearWeighInSkuByVehicleId(vehicleInspectionId);
         }
         public async Task<List<CartoFactoryModel>> GetListVehicleCarCallList(CartoFactorySearchModel searchModel)
         {
@@ -295,7 +365,9 @@ namespace Repositories.Repositories
                 var now = DateTime.Now;
                 var expireAt = new DateTime(now.Year, now.Month, now.Day, hours, minutes, 0);
                 searchModel.RegistrationTime = expireAt;
-                return await _VehicleInspectionDAL.GetListVehicleCarCallList(searchModel);
+                var data = await _VehicleInspectionDAL.GetListVehicleCarCallList(searchModel);
+                await AttachObdList(data);
+                return data;
             }
             catch (Exception ex)
             {
@@ -668,6 +740,7 @@ namespace Repositories.Repositories
                 searchModel.RegistrationTime = expireAt;
 
                 var data = await _VehicleInspectionDAL.GetListCartoFactory_EX(searchModel);
+                await AttachObdList(data);
                 if (data != null && data.Count > 0)
                 {
                     Workbook wb = new Workbook();
@@ -681,7 +754,7 @@ namespace Repositories.Repositories
                     Style style = ws.Cells["A1"].GetStyle();
 
                     #region Header
-                    range = cell.CreateRange(0, 0, 1, 14);
+                    range = cell.CreateRange(0, 0, 1, 15);
                     style = ws.Cells["A1"].GetStyle();
                     style.Font.IsBold = true;
                     style.IsTextWrapped = true;
@@ -709,12 +782,13 @@ namespace Repositories.Repositories
                     cell.SetColumnWidth(5, 30);
                     cell.SetColumnWidth(6, 30);
                     cell.SetColumnWidth(7, 25);
-                    cell.SetColumnWidth(8, 25);
+                    cell.SetColumnWidth(8, 35);
                     cell.SetColumnWidth(9, 25);
                     cell.SetColumnWidth(10, 25);
                     cell.SetColumnWidth(11, 25);
                     cell.SetColumnWidth(12, 25);
                     cell.SetColumnWidth(13, 25);
+                    cell.SetColumnWidth(14, 25);
 
 
 
@@ -727,17 +801,18 @@ namespace Repositories.Repositories
                     ws.Cells["F1"].PutValue("Số điện thoại");
                     ws.Cells["G1"].PutValue("Biển số xe");
                     ws.Cells["H1"].PutValue("Tải trọng xe (kg)");
-                    ws.Cells["I1"].PutValue("KH Ghi chú");
-                    ws.Cells["J1"].PutValue("BV ghi chú");
-                    ws.Cells["K1"].PutValue("TT đăng kiểm");
-                    ws.Cells["L1"].PutValue("Tình trạng xe");
+                    ws.Cells["I1"].PutValue("OBD nhận hàng");
+                    ws.Cells["J1"].PutValue("KH Ghi chú");
+                    ws.Cells["K1"].PutValue("BV ghi chú");
+                    ws.Cells["L1"].PutValue("TT đăng kiểm");
+                    ws.Cells["M1"].PutValue("Tình trạng xe");
 
 
                     #endregion
 
                     #region Body
 
-                    range = cell.CreateRange(1, 0, data.Count * 2, 14);
+                    range = cell.CreateRange(1, 0, data.Count * 2, 15);
                     style = ws.Cells["A2"].GetStyle();
                     style.Borders[BorderType.TopBorder].LineStyle = CellBorderType.Thin;
                     style.Borders[BorderType.TopBorder].Color = Color.Black;
@@ -799,10 +874,11 @@ namespace Repositories.Repositories
                                 ws.Cells["F" + RowIndex].PutValue(item.PhoneNumber);
                                 ws.Cells["G" + RowIndex].PutValue(item.VehicleNumber);
                                 ws.Cells["H" + RowIndex].PutValue(item.VehicleLoad);
-                                ws.Cells["I" + RowIndex].PutValue(item.LicenseNumber);
-                                ws.Cells["J" + RowIndex].PutValue(item.ProtectNotes);
-                                ws.Cells["K" + RowIndex].PutValue(TrangThai_name);
-                                ws.Cells["L" + RowIndex].PutValue(item.VehicleStatusName);
+                                ws.Cells["I" + RowIndex].PutValue(item.ObdDeliveriesText ?? "");
+                                ws.Cells["J" + RowIndex].PutValue(item.LicenseNumber);
+                                ws.Cells["K" + RowIndex].PutValue(item.ProtectNotes);
+                                ws.Cells["L" + RowIndex].PutValue(TrangThai_name);
+                                ws.Cells["M" + RowIndex].PutValue(item.VehicleStatusName);
 
                                 isFirstRow = false;
                             }
@@ -819,10 +895,11 @@ namespace Repositories.Repositories
                             ws.Cells.Merge(startRow - 1, 5, totalRow, 1); // F
                             ws.Cells.Merge(startRow - 1, 6, totalRow, 1); // G
                             ws.Cells.Merge(startRow - 1, 7, totalRow, 1); // H
-                            ws.Cells.Merge(startRow - 1, 8, totalRow, 1); // I
+                            ws.Cells.Merge(startRow - 1, 8, totalRow, 1); // I OBD
                             ws.Cells.Merge(startRow - 1, 9, totalRow, 1); // J
                             ws.Cells.Merge(startRow - 1, 10, totalRow, 1); // K
                             ws.Cells.Merge(startRow - 1, 11, totalRow, 1); // L
+                            ws.Cells.Merge(startRow - 1, 12, totalRow, 1); // M
                         }
                         RowIndex++;
 

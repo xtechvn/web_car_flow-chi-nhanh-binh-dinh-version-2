@@ -4,6 +4,7 @@
     Layout = null;
     var AllCode = (List<AllCode>)ViewBag.AllCode;
     var AllCode2 = (List<AllCode>)ViewBag.AllCode2;
+    var vi = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
 }
 @model List<CartoFactoryModel>
 <style>
@@ -78,6 +79,67 @@
     margin-left: 2px;
 }
 
+.car-call-obd {
+    text-align: left;
+    min-width: 180px;
+    max-width: 260px;
+    vertical-align: middle !important;
+}
+.car-call-obd__list {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+}
+.car-call-obd__pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px 5px 8px;
+    border-radius: 999px;
+    background: #e8f1fb;
+    color: #1f2937;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    width: fit-content;
+    max-width: 100%;
+}
+.car-call-obd__icon {
+    flex: 0 0 auto;
+    width: 16px;
+    height: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.car-call-obd__icon svg {
+    width: 14px;
+    height: 14px;
+    display: block;
+}
+.car-call-obd__dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #22c55e;
+    flex: 0 0 auto;
+}
+.car-call-obd__sum {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: #e8f8e8;
+    color: #166534;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    width: fit-content;
+}
+
 </style>
 @if (Model != null && Model.Count > 0)
 {
@@ -90,6 +152,7 @@
                 <th>Biển số xe</th>
                 <th>Giờ cân xong đầu vào</th>
                 <th>Trọng lượng thực tế (kg)</th>
+                <th>OBD nhận hàng</th>
                 <th>Máng xuất</th>
                 <th>Ghi chú</th>
                 <th>Trạng thái</th>
@@ -98,6 +161,8 @@
         <tbody id="dataBody-@ViewBag.type">
             @foreach (var item in Model)
             {
+                var obdList = item.ObdList ?? new List<VehicleInspectionObdModel>();
+                var obdTotal = obdList.Sum(x => x.NetWeight);
                 if (item.ListTroughWeight != null && item.ListTroughWeight.Count > 0)
                 {
                     foreach (var TroughWeight in item.ListTroughWeight)
@@ -128,6 +193,32 @@
                                 @(item.VehicleWeighingTimeComeOut!=null?((DateTime)item.VehicleWeighingTimeComeOut).ToString("HH:mm dd/MM/yyyy"):"")
                             </td>
                             <td>@(item.VehicleLoadTaken >0?((decimal)item.VehicleLoadTaken).ToString("N0"):"")</td>
+                            <td class="car-call-obd">
+                                @if (obdList.Count == 0)
+                                {
+                                    <span class="muted">—</span>
+                                }
+                                else
+                                {
+                                    <div class="car-call-obd__list">
+                                        @foreach (var obd in obdList)
+                                        {
+                                            <div class="car-call-obd__pill">
+                                                <span class="car-call-obd__icon" aria-hidden="true">
+                                                    <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                        <rect x="2.5" y="2" width="11" height="12" rx="1.5" stroke="#22c55e" stroke-width="1.4"/>
+                                                        <path d="M5 5.5h6M5 8h6M5 10.5h4" stroke="#22c55e" stroke-width="1.3" stroke-linecap="round"/>
+                                                    </svg>
+                                                </span>
+                                                <span>OBD @obd.Delivery</span>
+                                                <span class="car-call-obd__dot"></span>
+                                                <span>@obd.NetWeight.ToString("#,##0.###", vi) kg</span>
+                                            </div>
+                                        }
+                                        <div class="car-call-obd__sum">Tổng OBD: @obdTotal.ToString("#,##0.###", vi) kg</div>
+                                    </div>
+                                }
+                            </td>
                             <td>
                                 <div class="status-dropdown">
                                     @if (TroughWeight.VehicleTroughWeight == null)
@@ -216,6 +307,32 @@
                             @(item.VehicleWeighingTimeComeOut!=null?((DateTime)item.VehicleWeighingTimeComeOut).ToString("HH:mm dd/MM/yyyy"):"")
                         </td>
                         <td>@(item.VehicleLoadTaken >0?((decimal)item.VehicleLoadTaken).ToString("N0"):"")</td>
+                        <td class="car-call-obd">
+                            @if (obdList.Count == 0)
+                            {
+                                <span class="muted">—</span>
+                            }
+                            else
+                            {
+                                <div class="car-call-obd__list">
+                                    @foreach (var obd in obdList)
+                                    {
+                                        <div class="car-call-obd__pill">
+                                            <span class="car-call-obd__icon" aria-hidden="true">
+                                                <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                    <rect x="2.5" y="2" width="11" height="12" rx="1.5" stroke="#22c55e" stroke-width="1.4"/>
+                                                    <path d="M5 5.5h6M5 8h6M5 10.5h4" stroke="#22c55e" stroke-width="1.3" stroke-linecap="round"/>
+                                                </svg>
+                                            </span>
+                                            <span>OBD @obd.Delivery</span>
+                                            <span class="car-call-obd__dot"></span>
+                                            <span>@obd.NetWeight.ToString("#,##0.###", vi) kg</span>
+                                        </div>
+                                    }
+                                    <div class="car-call-obd__sum">Tổng OBD: @obdTotal.ToString("#,##0.###", vi) kg</div>
+                                </div>
+                            }
+                        </td>
                         <td>
                             <div class="status-dropdown">
                                 <p style="font-size:13px!important">Chưa có</p>
@@ -268,6 +385,7 @@ else
                 <th>Biển số xe</th>
                 <th>Giờ cân xong đầu vào</th>
                 <th>Trọng lượng thực tế (kg)</th>
+                <th>OBD nhận hàng</th>
                 <th>Máng xuất</th>
                 <th>Ghi chú</th>
                 <th>Trạng thái</th>
@@ -281,8 +399,8 @@ else
 
 <script>
 
- // Gộp cột 0,1,2 nếu cột 0-4 giống nhau
-    _cartcalllist.autoRowspanWithCondition("ListCarCall-" +@ViewBag.type, [0, 1, 2, 3, 4,5,7, 8], [0, 1, 2, 3, 4,5]);
+ // Gộp cột xe (kể cả OBD); không gộp cột Máng xuất
+    _cartcalllist.autoRowspanWithCondition("ListCarCall-" +@ViewBag.type, [0, 1, 2, 3, 4, 5, 6, 8, 9], [0, 1, 2, 3, 4, 5, 6]);
 </script>
 
 

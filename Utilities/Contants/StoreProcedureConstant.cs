@@ -75,6 +75,16 @@ namespace Utilities.Contants
         public static string SP_GetListObdConfig = "SP_GetListObdConfig";
         public static string SP_GetObdConfigById = "SP_GetObdConfigById";
         public static string SP_GetListObdConfigLog = "SP_GetListObdConfigLog";
+        public static string SP_SuggestObdConfigLatest = "SP_SuggestObdConfigLatest";
+        public static string SP_GetVehicleInspectionObdByVehicleIds = "SP_GetVehicleInspectionObdByVehicleIds";
+        public static string SP_InsertVehicleInspectionObd = "SP_InsertVehicleInspectionObd";
+        public static string SP_DeleteVehicleInspectionObd = "SP_DeleteVehicleInspectionObd";
+
+        public static string SP_GetVehicleWeighInSkuByVehicleIds = "SP_GetVehicleWeighInSkuByVehicleIds";
+        public static string SP_InsertVehicleWeighInSku = "SP_InsertVehicleWeighInSku";
+        public static string SP_UpdateVehicleWeighInSku = "SP_UpdateVehicleWeighInSku";
+        public static string SP_DeleteVehicleWeighInSku = "SP_DeleteVehicleWeighInSku";
+        public static string SP_ClearVehicleWeighInSkuByVehicleId = "SP_ClearVehicleWeighInSkuByVehicleId";
 
     }
 }

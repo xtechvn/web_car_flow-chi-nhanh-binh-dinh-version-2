@@ -50,6 +50,7 @@ namespace Entities.ViewModels.Car
         public string CSNotes { get; set; }
         public decimal? VehicleWeightIn { get; set; }
         public decimal? VehicleWeightOut { get; set; }
+        public int? GoodsType { get; set; }
     }
 
 }

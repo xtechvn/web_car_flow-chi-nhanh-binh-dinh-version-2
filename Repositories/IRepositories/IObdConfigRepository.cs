@@ -1,3 +1,4 @@
+using Entities.ViewModels.Car;
 using Entities.ViewModels.ObdConfig;
 using System;
 using System.Collections.Generic;
@@ -16,5 +17,9 @@ namespace Repositories.IRepositories
         Task<List<ObdConfigVersionModel>> GetListVersion(DateTime loadingDate);
         Task<List<ObdConfigModel>> GetList(DateTime loadingDate, int version, string delivery, int pageIndex, int pageSize);
         ObdConfigHistoryModel GetHistory(long obdId);
+        Task<List<ObdSuggestItem>> SuggestLatest(string keyword, int top = 20);
+        Task<List<VehicleInspectionObdModel>> GetByVehicleIds(IEnumerable<int> vehicleIds);
+        Task<VehicleInspectionObdSaveResult> AttachToVehicle(int vehicleInspectionId, long obdId, int userId);
+        Task<VehicleInspectionObdSaveResult> DetachFromVehicle(int vehicleInspectionId, long obdId);
     }
 }

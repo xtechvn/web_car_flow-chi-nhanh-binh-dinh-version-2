@@ -4,6 +4,115 @@ Mỗi lần thay đổi code phải thêm một mục mới ở đầu file: ng�
 
 ---
 
+## 2026-10-17 – WeighedInput: multi-SKU Hàng xá + cột đúng wireframe
+
+**Mục đích:** Chọn **Hàng xá** → nhập nhiều SKU (cân nặng thực tế) trên 1 dòng xe; thêm/xóa SKU; lưu DB. Sắp cột theo wireframe (13 cột).
+
+**DB:** `Scripts/vehicle_weigh_in_sku.sql` — bảng `VehicleWeighInSku` + SP get/insert/update/delete (đã apply).
+
+**Rule:** `GoodsType = 1` (Hàng xá) bật panel SKU; `= 0` (Hàng bao) giữ 1 ô `VehicleWeightIn`. Tổng SKU đồng bộ `VehicleWeightIn`.
+
+**Cột:** STT | Giờ xử lý đăng tải | Biển số | OBD | Net cân đầu vào/SKU | Ship-to Party | Net Weight OBD | Tải ĐK | Check | Nhóm tài | Ghi chú | Loại hàng/Tiến độ | Tình trạng.
+
+---
+
+## 2026-10-17 – WeighedInput bổ sung theo wireframe
+
+**Mục đích:** Giữ bảng cũ, bổ sung cột wireframe: OBD widget chung, Ship-to Party (= CustomerName), Net weight OBD, tải đăng kiểm, Check tải trọng, ghi chú, Loại hàng (Hàng bao/Hàng xá).
+
+**DB:** chạy `Scripts/weighed_input_goods_type.sql` (đã apply trên Cargill_BinhDuong_v2): cột `VehicleInspection.GoodsType`, AllCode `GOODS_TYPE`, mở rộng `SP_GetListVehicleWeighedInput` + `sp_UpdateVehicleInspection`.
+
+**Sửa / thêm**
+
+| File | Thay đổi |
+|---|---|
+| `wwwroot/modules/obd-token.js` | Widget OBD dùng chung CartoFactory + WeighedInput |
+| `Views/Car/ListWeighedInput.cshtml`, `WeighedInput.cshtml`, `weighedinput.js` | Cột mới + select GoodsType + Check |
+| `cartofactory.js` / `CartoFactory.cshtml` | Gọi `_obdToken` |
+| Entity/DAL/Repo/Controller | `GoodsType`, AttachObdList WeighedInput, UpdateStatus type=14 |
+
+**Lưu ý:** Deploy WEB.CMS; Ctrl+F5. Tiến độ multi-SKU để sau (placeholder HTML).
+
+---
+
+## 2026-10-16 – CartoFactory: cột OBD nhận hàng (multi)
+
+**Mục đích:** Gắn nhiều mã OBD vào từng xe ở bảng Chưa xử lý; suggest từ ObdSetting (ngày nghiệp vụ + version mới nhất); tạo mới NetWeight=0; lưu bảng quan hệ.
+
+**Thêm mới**
+
+| File | Nội dung |
+|---|---|
+| `Scripts/vehicle_inspection_obd.sql` | Bảng `VehicleInspectionObd` + SP suggest/get/attach/detach |
+| `Entities/ViewModels/Car/VehicleInspectionObdModel.cs` | Model gắn OBD / suggest |
+
+**Sửa**
+
+| File | Thay đổi |
+|---|---|
+| `DAL/ObdConfigDAL.cs`, `Repositories/*ObdConfig*` | SuggestLatest, GetByVehicleIds, Attach/Detach |
+| `Repositories/VehicleInspectionRepository.cs` | Load OBD khi list + Export Excel thêm cột |
+| `Controllers/CarController.cs` | `SuggestObd`, `AttachVehicleObd`, `DetachVehicleObd` |
+| `Views/Car/ListCartoFactory.cshtml`, `cartofactory.js`, `cms-list-page.css` | Token input cột **OBD nhận hàng** |
+
+**Vận hành:** Chạy script `Scripts/vehicle_inspection_obd.sql` trên DB trước khi deploy CMS.
+
+## 2026-10-16 – Chỉnh layout section + nút Xuất Excel
+
+**Sửa**
+
+| File | Thay đổi |
+|---|---|
+| `wwwroot/css/cms-list-page.css` | Title/search cùng line, cùng cỡ chữ; `th` `vertical-align: middle`; bỏ margin lệch |
+| `Views/Car/*.cshtml`, `Views/ListCar/*.cshtml` | Mỗi bảng: `cms-head` (tên trái + search phải) rồi `cms-table` |
+| `Views/Car/CartoFactory.cshtml` + SummaryReport | Nút **Xuất Excel**: icon trái + chữ phải |
+
+## 2026-10-16 – Quy chuẩn UI danh sách CMS (theo mẫu ObdSetting)
+
+**Mục đích:** Một style dùng chung cho các màn danh sách xe; ObdSetting giữ nguyên style riêng.
+
+**Thêm mới**
+
+| File | Nội dung |
+|---|---|
+| `wwwroot/css/cms-list-page.css` | `cms-page` / `cms-head` / `cms-table` / pin cột; load qua `_Layout` |
+
+**Sửa**
+
+| File | Thay đổi |
+|---|---|
+| `Views/Shared/_Layout.cshtml` | Link `cms-list-page.css` |
+| `Views/Car/CartoFactory.cshtml`, `RegisteredVehicle.cshtml` | Áp dụng `cms-*`; bỏ scroll dọc cố định |
+| `Views/Car/ListCartoFactory.cshtml`, `ListRegisteredVehicle.cshtml` | Pin STT/giờ/biển số; RegisteredVehicle sort mới nhất trước |
+| `Views/Car/ProcessingIsLoading.cshtml`, `WeighedInput.cshtml`, `CallTheScale.cshtml` | Cùng layout `cms-*` |
+| `Views/ListCar/ListVehicles.cshtml`, `CarCallList.cshtml` | Cùng layout `cms-*` |
+| `Controllers/CarController.cs` | `ListRegisteredVehicle` / `ListCartoFactory`: `OrderByDescending(RegisterDateOnline)` |
+| `wwwroot/modules/cartofactory.js`, `registeredvehicle.js` | Sort DESC + cột pin |
+
+---
+
+## 2026-10-16 – Rule cut-off: sau TIME_RESET chỉ hiện ở Danh sách xe đăng ký đến 00:00
+
+**Mục đích:** Xe đăng ký sau giờ cut-off (AllCode.TIME_RESET, vd 17:23) không còn nhảy realtime sang
+CartoFactory (trang có nút Excel, dù title UI ghi "Danh sách xe đăng ký"). Chỉ hiện ở `Car/RegisteredVehicle`
+đến hết ngày; sau 00:00 ngày hôm sau mới vào CartoFactory qua SQL.
+
+**Nguyên nhân vẫn thấy nhảy:** CMS chưa deploy bản publish theo kênh `_DK`, hoặc publisher cũ còn đẩy kênh CartoFactory.
+
+**Sửa (chặn 3 lớp)**
+
+| File | Thay đổi |
+|---|---|
+| `Services/RegistrationImportService.cs` | Sau cut-off publish Redis `_DK`; trước cut-off publish kênh CartoFactory |
+| `Services/RedisSubscriberService.cs` | Nếu nhận nhầm trên kênh CartoFactory mà giờ ≥ cut-off → chuyển `ReceiveRegistration_DK`, không gửi `ReceiveRegistration` |
+| `Controllers/CarController.cs` + `Views/Car/CartoFactory.cshtml` | Truyền `CART_CUTOFF_TIME` từ AllCode |
+| `wwwroot/modules/cartofactory.js` | Bỏ qua SignalR `ReceiveRegistration` nếu giờ đăng ký ≥ cut-off |
+| `appsettings.json` | `RealtimeChannelRegistered` |
+
+**Lưu ý vận hành:** **Bắt buộc publish lại WEB.CMS + restart** (BackgroundService `RedisSubscriberService` chỉ nạp lúc start). Hard refresh (Ctrl+F5) trang CartoFactory.
+
+---
+
 ## 2026-10-16 – Đẩy lại xe bị thiếu từ MongoDB + khôi phục quy tắc gốc
 
 **Mục đích:** xe có trong MongoDB (FE đã cấp số) nhưng chưa vào SQL (message mất / n8n lỗi) được hiển thị

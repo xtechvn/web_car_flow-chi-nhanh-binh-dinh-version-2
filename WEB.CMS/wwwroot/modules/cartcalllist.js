@@ -349,6 +349,31 @@ $(document).ready(function () {
     }));
     const jsonString = JSON.stringify(options);
     const jsonString2 = JSON.stringify(options2);
+
+    var obdIconSvg = '<span class="car-call-obd__icon" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2.5" y="2" width="11" height="12" rx="1.5" stroke="#22c55e" stroke-width="1.4"/><path d="M5 5.5h6M5 8h6M5 10.5h4" stroke="#22c55e" stroke-width="1.3" stroke-linecap="round"/></svg></span>';
+
+    function formatObdCell(item) {
+        var list = item.obdList || item.ObdList || [];
+        if (!list.length) {
+            return '<td class="car-call-obd"><span class="muted">—</span></td>';
+        }
+        var total = 0;
+        var pills = '';
+        for (var i = 0; i < list.length; i++) {
+            var o = list[i];
+            var nw = Number(o.netWeight != null ? o.netWeight : o.NetWeight) || 0;
+            var del = o.delivery != null ? o.delivery : o.Delivery;
+            total += nw;
+            pills += '<div class="car-call-obd__pill">' + obdIconSvg +
+                '<span>OBD ' + del + '</span><span class="car-call-obd__dot"></span>' +
+                '<span>' + nw.toLocaleString('vi-VN', { maximumFractionDigits: 3 }) + ' kg</span></div>';
+        }
+        return '<td class="car-call-obd"><div class="car-call-obd__list">' + pills +
+            '<div class="car-call-obd__sum">Tổng OBD: ' +
+            total.toLocaleString('vi-VN', { maximumFractionDigits: 3 }) +
+            ' kg</div></div></td>';
+    }
+
     // Hàm render row
     function renderRow(item, isProcessed) {
         var date = new Date(item.vehicleWeighingTimeComeOut);
@@ -399,6 +424,7 @@ $(document).ready(function () {
                            data-id="${item.id}" style="cursor:pointer">${item.vehicleNumber}</a></td>
         <td>${formatted || ""}</td>
         <td>${item.vehicleLoadTaken > 0 ? item.vehicleLoadTaken.toLocaleString('en-US') : 0}</td>
+        ${formatObdCell(item)}
         <td>
         
             ${item.listTroughWeight[itemTroughWeight].vehicleTroughWeight != null? html_div : html_input}
@@ -443,6 +469,7 @@ $(document).ready(function () {
                            data-id="${item.id}" style="cursor:pointer">${item.vehicleNumber}</a></td>
         <td>${formatted || ""}</td>
         <td>${item.vehicleLoadTaken > 0 ? item.vehicleLoadTaken.toLocaleString('en-US') : 0}</td>
+        ${formatObdCell(item)}
         <td>
            ${item.vehicleTroughWeight > 0 ? html_div : html_input}
         </td>
@@ -533,6 +560,7 @@ $(document).ready(function () {
                            data-id="${item.id}" style="cursor:pointer">${item.vehicleNumber}</a></td>
         <td>${formatted || ""}</td>
         <td>${item.vehicleLoadTaken > 0 ? item.vehicleLoadTaken.toLocaleString('en-US') : 0}</td>
+        ${formatObdCell(item)}
         <td>
             <div class="status-dropdown">
                 <button class="dropdown-toggle ${isProcessed ? "disabled" : ""}"
@@ -653,7 +681,7 @@ $(document).ready(function () {
         const tbody = document.getElementById("dataBody-1");
         tbody.insertAdjacentHTML("beforeend", renderRow(item, true));
         sortTable_Da_SL(); // sắp xếp lại ngay khi thêm
-        _cartcalllist.autoRowspanWithCondition("ListCarCall-1", [0, 1, 2, 3, 4, 5, 7, 8], [0, 1, 2, 3, 4, 5]);
+        _cartcalllist.autoRowspanWithCondition("ListCarCall-1", [0, 1, 2, 3, 4, 5, 6, 8, 9], [0, 1, 2, 3, 4, 5, 6]);
         requestAnimationFrame(() => {
             _cartcalllist.initMangStatus();
         });
@@ -664,7 +692,7 @@ $(document).ready(function () {
         const tbody = document.getElementById("dataBody-1");
         tbody.insertAdjacentHTML("beforeend", renderRow_Bo_luot(item, true));
         sortTable_Da_SL(); // sắp xếp lại ngay khi thêm
-        _cartcalllist.autoRowspanWithCondition("ListCarCall-1", [0, 1, 2, 3, 4, 5, 7, 8], [0, 1, 2, 3, 4, 5]);
+        _cartcalllist.autoRowspanWithCondition("ListCarCall-1", [0, 1, 2, 3, 4, 5, 6, 8, 9], [0, 1, 2, 3, 4, 5, 6]);
         requestAnimationFrame(() => {
             _cartcalllist.initMangStatus();
         });
@@ -707,7 +735,7 @@ $(document).ready(function () {
         $('.CartoFactory_' + item.id).remove();
         tbody.insertAdjacentHTML("beforeend", renderRow(item, false));
         sortTable(); // sắp xếp lại ngay khi thêm
-        _cartcalllist.autoRowspanWithCondition("ListCarCall-0", [0, 1, 2, 3, 4, 5, 7, 8], [0, 1, 2, 3, 4, 5]);
+        _cartcalllist.autoRowspanWithCondition("ListCarCall-0", [0, 1, 2, 3, 4, 5, 6, 8, 9], [0, 1, 2, 3, 4, 5, 6]);
         requestAnimationFrame(() => {
             _cartcalllist.initMangStatus();
         });
@@ -719,7 +747,7 @@ $(document).ready(function () {
         const tbody = document.getElementById("dataBody-0");
         tbody.insertAdjacentHTML("beforeend", renderRow(item, false));
         sortTable();
-        _cartcalllist.autoRowspanWithCondition("ListCarCall-0", [0, 1, 2, 3, 4, 5, 7, 8], [0, 1, 2, 3, 4, 5]);
+        _cartcalllist.autoRowspanWithCondition("ListCarCall-0", [0, 1, 2, 3, 4, 5, 6, 8, 9], [0, 1, 2, 3, 4, 5, 6]);
     });
     connection.off("ListWeighedInput");
     connection.on("ListWeighedInput", function (item) {
@@ -735,7 +763,7 @@ $(document).ready(function () {
         const tbody = document.getElementById("dataBody-1");
         tbody.insertAdjacentHTML("beforeend", renderRow(item, true));
         sortTable_Da_SL(); // sắp xếp lại ngay khi thêm
-        _cartcalllist.autoRowspanWithCondition("ListCarCall-1", [0, 1, 2, 3, 4, 5, 7, 8], [0, 1, 2, 3, 4, 5]);
+        _cartcalllist.autoRowspanWithCondition("ListCarCall-1", [0, 1, 2, 3, 4, 5, 6, 8, 9], [0, 1, 2, 3, 4, 5, 6]);
     });
 
     connection.onreconnecting(error => {

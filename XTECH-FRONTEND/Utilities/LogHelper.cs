@@ -6,149 +6,109 @@ namespace XTECH_FRONTEND.Utilities
     public static class LogHelper
     {
         public static string botToken = "8199447284:AAHMs8h2hJrG0XU75SrmWJP0Dkpie77uNYE";
-        public static string group_Id = " -4715213980";
+        public static string group_Id = "-4715213980";
         public static string enviromment = "DEV-CAR";
         public static string CompanyType = " ";
         public static int CompanyTypeInt = 0;
 
+        private static readonly object ConfigLock = new object();
+        private static DateTime _configLoadedAt = DateTime.MinValue;
 
         private static void LoadConfig()
         {
+            // IIS hay đổi thư mục làm việc → đọc tương đối "appsettings.json" dễ thất bại, log Telegram im lặng
+            if ((DateTime.UtcNow - _configLoadedAt).TotalSeconds < 60) return;
 
-            using (StreamReader r = new StreamReader("appsettings.json"))
+            lock (ConfigLock)
             {
-                AppSettings _appconfig = new AppSettings();
-                string json = r.ReadToEnd();
-                _appconfig = JsonConvert.DeserializeObject<AppSettings>(json);
-                enviromment = _appconfig.BotSetting.environment;
-                botToken = _appconfig.BotSetting.bot_token;
-                group_Id = _appconfig.BotSetting.bot_group_id;
-                string company_type = _appconfig.CompanyType;
-                
+                if ((DateTime.UtcNow - _configLoadedAt).TotalSeconds < 60) return;
+                try
+                {
+                    var path = ResolveAppSettingsPath();
+                    if (path == null) return;
+
+                    var json = File.ReadAllText(path);
+                    var _appconfig = JsonConvert.DeserializeObject<AppSettings>(json);
+                    if (_appconfig?.BotSetting == null) return;
+
+                    enviromment = _appconfig.BotSetting.environment ?? enviromment;
+                    botToken = string.IsNullOrWhiteSpace(_appconfig.BotSetting.bot_token)
+                        ? botToken
+                        : _appconfig.BotSetting.bot_token.Trim();
+                    group_Id = string.IsNullOrWhiteSpace(_appconfig.BotSetting.bot_group_id)
+                        ? group_Id
+                        : _appconfig.BotSetting.bot_group_id.Trim();
+                    CompanyType = _appconfig.CompanyType ?? CompanyType;
+                    _configLoadedAt = DateTime.UtcNow;
+                }
+                catch
+                {
+                    // Giữ cấu hình đã có / mặc định
+                }
             }
         }
+
+        private static string? ResolveAppSettingsPath()
+        {
+            var candidates = new[]
+            {
+                Path.Combine(AppContext.BaseDirectory, "appsettings.json"),
+                Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json"),
+                "appsettings.json"
+            };
+            return candidates.FirstOrDefault(File.Exists);
+        }
+
         public static int InsertLogTelegram(string message)
         {
             var rs = 1;
             try
             {
                 LoadConfig();
-                TelegramBotClient alertMsgBot = new TelegramBotClient(botToken);
-                var rs_push = alertMsgBot.SendTextMessageAsync(group_Id, "[" + enviromment + "-" + CompanyType + "] - " + message).Result;
+                var text = "[" + enviromment + "-" + CompanyType + "] - " + (message ?? string.Empty);
+                // Telegram giới hạn 4096 ký tự mỗi tin
+                if (text.Length > 4000) text = text.Substring(0, 3990) + "...(cắt)";
+
+                var alertMsgBot = new TelegramBotClient(botToken);
+                var rs_push = alertMsgBot.SendTextMessageAsync(group_Id.Trim(), text).Result;
             }
             catch (Exception ex)
             {
                 rs = -1;
-            }
-            return rs;
-        }
-        /*
-        /// <summary>
-        /// function ghi log vao telegram
-        /// </summary>
-        /// <param name="botToken">Token cua bot </param>
-        /// <param name="group_Id">chat Id cua nhom hoac ca nhan</param>
-        /// <param name="message">noi dung can gui</param>
-        /// <returns>1: thanh cong</returns>
-        /// <returns>-1: loi</returns>
-        /// <createDate>14-04-2020</createDate>
-        /// <author>ThangNV</author>
-        public static int InsertLogTelegram(string botToken, string group_Id, string message)
-        {
-            var rs = 1;
-            try
-            {
-                TelegramBotClient alertMsgBot = new TelegramBotClient(botToken);
-                alertMsgBot.SendTextMessageAsync(group_Id, "AdavigoCMS - " + message);
-            }
-            catch (Exception ex)
-            {
-                rs = -1;
-            }
-            return rs;
-        }
-        public static async Task<bool> InsertImageTelegramAsync(InputOnlineFile image, string imgpath = null)
-        {
-            var rs = true;
-            try
-            {
-                TelegramBotClient alertMsgBot = new TelegramBotClient(botToken);
-                await alertMsgBot.SendPhotoAsync(group_Id, image);
-                if (imgpath != null && imgpath.Trim() != "")
-                {
-                    File.Delete(imgpath);
-                }
-            }
-            catch (Exception)
-            {
-                rs = false;
+                WriteFallback("Telegram lỗi: " + ex.Message + " | Nội dung gốc: " + message);
             }
             return rs;
         }
 
-        public static void InsertLogTelegramByUrl(string bot_token, string id_group, string msg)
+        /// <summary>Gửi lỗi đăng ký lên Telegram kèm biển số / IP / stack (đã cắt ngắn).</summary>
+        public static void InsertRegistrationError(string source, string? plate, string? ip, Exception ex)
         {
-            string JsonContent = string.Empty;
-            string url_api = "https://api.telegram.org/bot" + bot_token + "/sendMessage?chat_id=" + id_group + "&text=" + msg;
-            try
-            {
-                using (var webclient = new System.Net.WebClient())
-                {
-                    JsonContent = webclient.DownloadString(url_api);
-                }
-            }
-            catch (Exception ex)
-            {
-
-            }
+            var msg =
+                source + "\n"
+                + "Biển: " + (string.IsNullOrWhiteSpace(plate) ? "(không có)" : plate) + "\n"
+                + "IP: " + (string.IsNullOrWhiteSpace(ip) ? "(không có)" : ip) + "\n"
+                + "Lỗi: " + ex.GetType().Name + ": " + ex.Message + "\n"
+                + "Inner: " + (ex.InnerException?.Message ?? "(không)") + "\n"
+                + "Stack: " + (ex.StackTrace ?? "");
+            _ = Task.Run(() => InsertLogTelegram(msg));
         }
 
-        public static void WriteLogActivity(string AppPath, string log_content)
+        private static void WriteFallback(string content)
         {
-            StreamWriter sLogFile = null;
             try
             {
-                //Ghi lại hành động của người sử dụng vào log file
-                string sDay = string.Format("{0:dd}", DateTime.Now);
-                string sMonth = string.Format("{0:MM}", DateTime.Now);
-                string strLogFileName = sDay + "-" + sMonth + "-" + DateTime.Now.Year + ".log";
-                string strFolderName = AppPath + @"\Logs\" + DateTime.Now.Year + "-" + sMonth;
-                //Application.StartupPath
-                //Tạo thư mục nếu chưa có
-                if (!Directory.Exists(strFolderName + @"\"))
-                {
-                    Directory.CreateDirectory(strFolderName + @"\");
-                }
-                strLogFileName = strFolderName + @"\" + strLogFileName;
-
-                if (File.Exists(strLogFileName))
-                {
-                    //Nếu đã tồn tại file thì tiếp tục ghi thêm
-                    sLogFile = File.AppendText(strLogFileName);
-                    sLogFile.WriteLine(string.Format("Thời điểm ghi nhận: {0:hh:mm:ss tt}", DateTime.Now));
-                    sLogFile.WriteLine(string.Format("Chi tiết log: {0}", log_content));
-                    sLogFile.WriteLine("-------------------------------------------");
-                    sLogFile.Flush();
-                }
-                else
-                {
-                    //Nếu file chưa tồn tại thì có thể tạo mới và ghi log
-                    sLogFile = new StreamWriter(strLogFileName);
-                    sLogFile.WriteLine(string.Format("Thời điểm ghi nhận: {0:hh:mm:ss tt}", DateTime.Now));
-                    sLogFile.WriteLine(string.Format("Chi tiết log: {0}", log_content));
-                    sLogFile.WriteLine("-------------------------------------------");
-                }
-                sLogFile.Close();
+                var dir = Path.Combine(AppContext.BaseDirectory, "Logs");
+                Directory.CreateDirectory(dir);
+                File.AppendAllText(
+                    Path.Combine(dir, "telegram_fail.log"),
+                    DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") + " - " + content + Environment.NewLine);
             }
-            catch (Exception)
+            catch
             {
-                if (sLogFile != null)
-                {
-                    sLogFile.Close();
-                }
             }
-        }*/
+        }
     }
+
     public class AppSettings
     {
         public BotSetting BotSetting { get; set; }
@@ -165,12 +125,12 @@ namespace XTECH_FRONTEND.Utilities
     public class SystemLog
     {
 
-        public int SourceID { get; set; } // log từ nguồn nào, quy định trong SystemLogSourceID
-        public string Type { get; set; } // nội dung: booking, order,....
-        public string KeyID { get; set; } // Key: mã đơn, mã khách hàng, mã booking,....
-        public string ObjectType { get; set; } // ObjectType: Dùng để phân biệt các đối tượng cần log với nhau. Ví dụ: log cho đơn hàng, khách hàng, hợp đồng, Phiếu thu...
-        public int CompanyType { get; set; }//dùng để phân biệt company nào
-        public string Log { get; set; } // nội dung log
-        public DateTime CreatedTime { get; set; } // thời gian tạo
+        public int SourceID { get; set; }
+        public string Type { get; set; }
+        public string KeyID { get; set; }
+        public string ObjectType { get; set; }
+        public int CompanyType { get; set; }
+        public string Log { get; set; }
+        public DateTime CreatedTime { get; set; }
     }
 }

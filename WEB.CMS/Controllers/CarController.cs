@@ -22,27 +22,37 @@ namespace WEB.CMS.Controllers
     {
         private readonly IVehicleInspectionRepository _vehicleInspectionRepository;
         private readonly IAllCodeRepository _allCodeRepository;
+        private readonly IObdConfigRepository _obdConfigRepository;
         private readonly IHubContext<CarHub> _hubContext;
         private readonly WorkQueueClient _workQueueClient;
         private readonly IWebHostEnvironment _WebHostEnvironment;
-        public CarController(IVehicleInspectionRepository vehicleInspectionRepository, IAllCodeRepository allCodeRepository, IHubContext<CarHub> hubContext, IConfiguration configuration, IWebHostEnvironment WebHostEnvironment)
+        public CarController(IVehicleInspectionRepository vehicleInspectionRepository, IAllCodeRepository allCodeRepository, IObdConfigRepository obdConfigRepository, IHubContext<CarHub> hubContext, IConfiguration configuration, IWebHostEnvironment WebHostEnvironment)
         {
             _vehicleInspectionRepository = vehicleInspectionRepository;
             _allCodeRepository = allCodeRepository;
+            _obdConfigRepository = obdConfigRepository;
             _hubContext = hubContext;
             _workQueueClient = new WorkQueueClient(configuration);
             _WebHostEnvironment = WebHostEnvironment;
         }
-        public IActionResult CartoFactory()
+        public async Task<IActionResult> CartoFactory()
         {
             try
             {
+                // Cut-off động từ AllCode — JS dùng để bỏ qua SignalR xe đăng ký sau cut-off
+                var timeReset = await _allCodeRepository.GetListSortByName(AllCodeType.TIME_RESET);
+                var hours = timeReset != null && timeReset.Count > 0 && timeReset[0].UpdateTime.HasValue
+                    ? timeReset[0].UpdateTime.Value.Hour : 17;
+                var minutes = timeReset != null && timeReset.Count > 0 && timeReset[0].UpdateTime.HasValue
+                    ? timeReset[0].UpdateTime.Value.Minute : 55;
+                ViewBag.CutoffTime = $"{hours:D2}:{minutes:D2}";
                 return View();
             }
             catch (Exception ex)
             {
                 LogHelper.InsertLogTelegram("CartoFactory - CarController: " + ex);
             }
+            ViewBag.CutoffTime = "17:55";
             return View();
         }
         public async Task<IActionResult> Detail(int id)
@@ -69,9 +79,12 @@ namespace WEB.CMS.Controllers
                 ViewBag.AllCode = AllCode;
                 ViewBag.LoadingType = LoadingType;
                 var data = await _vehicleInspectionRepository.GetListCartoFactory(SearchModel);
-                if (data != null && data.Count > 0 && SearchModel.type == 1)
+                if (data != null && data.Count > 0)
                 {
-                    data = data.OrderBy(s => s.VehicleArrivalDate).ToList();
+                    // Đã xử lý: theo giờ xe đến; danh sách đăng ký: giờ đăng ký online mới nhất lên đầu
+                    data = SearchModel.type == 1
+                        ? data.OrderBy(s => s.VehicleArrivalDate).ToList()
+                        : data.OrderByDescending(s => s.RegisterDateOnline).ToList();
                 }
                 ViewBag.count = data != null ? data.Count : 0;
                 ViewBag.sum = data != null ? data.Sum(x => Convert.ToInt32(x.VehicleLoad)).ToString("N0") : "0";
@@ -237,6 +250,8 @@ namespace WEB.CMS.Controllers
                 ViewBag.type = SearchModel.type;
                 var AllCode = await _allCodeRepository.GetListSortByName(AllCodeType.VEHICLEWEIGHEDSTATUS);
                 ViewBag.AllCode = AllCode;
+                var GoodsTypeCodes = await _allCodeRepository.GetListSortByName(AllCodeType.GOODS_TYPE);
+                ViewBag.GoodsTypeCodes = GoodsTypeCodes;
                 var data = await _vehicleInspectionRepository.GetListVehicleWeighedInput(SearchModel);
                 return PartialView(data);
             }
@@ -298,6 +313,7 @@ namespace WEB.CMS.Controllers
                 model.CSNotes = detail.CSNotes;
                 model.VehicleWeightIn = detail.VehicleWeightIn;
                 model.VehicleWeightOut = detail.VehicleWeightOut;
+                model.GoodsType = detail.GoodsType;
                 switch (type)
                 {
                     case 1:
@@ -805,6 +821,47 @@ namespace WEB.CMS.Controllers
                             }
                         }
                         break;
+                    case 14:
+                        {
+                            // Loại hàng WeighedInput: AllCode GOODS_TYPE (0 Hàng bao, 1 Hàng xá)
+                            if (detail.GoodsType == status)
+                            {
+                                return Ok(new
+                                {
+                                    status = (int)ResponseType.ERROR,
+                                    msg = "Cập nhật không thành công.Tình trạng xe không thay đổi"
+                                });
+                            }
+                            model.GoodsType = status;
+                            UpdateCar = await _vehicleInspectionRepository.UpdateCar(model);
+                            if (UpdateCar > 0)
+                            {
+                                var allcode = await _allCodeRepository.GetListSortByName(AllCodeType.GOODS_TYPE);
+                                var allcode_detail = allcode.FirstOrDefault(s => s.CodeValue == model.GoodsType);
+                                detail.GoodsType = status;
+                                detail.GoodsTypeName = allcode_detail == null ? "" : allcode_detail.Description;
+                                // Hàng xá: đảm bảo có ít nhất 1 dòng SKU để nhập cân
+                                VehicleWeighInSkuModel firstSku = null;
+                                if (status == 1)
+                                {
+                                    var existingSkus = await _vehicleInspectionRepository.GetWeighInSkuByVehicleIds(new[] { id });
+                                    if (existingSkus == null || existingSkus.Count == 0)
+                                        firstSku = await _vehicleInspectionRepository.InsertWeighInSku(id, 0, _UserId);
+                                    else
+                                        firstSku = existingSkus[0];
+                                }
+                                await _hubContext.Clients.All.SendAsync("ListWeighedInput_GoodsType", detail);
+                                return Ok(new
+                                {
+                                    status = (int)ResponseType.SUCCESS,
+                                    msg = "cập nhật thành công",
+                                    goodsType = status,
+                                    goodsTypeName = detail.GoodsTypeName,
+                                    sku = firstSku
+                                });
+                            }
+                        }
+                        break;
                 }
                 if (UpdateCar > 0)
                     return Ok(new
@@ -846,6 +903,10 @@ namespace WEB.CMS.Controllers
                 ViewBag.AllCode = AllCode;
                 ViewBag.LoadingType = LoadingType;
                 var data = await _vehicleInspectionRepository.GetListRegisteredVehicle(SearchModel);
+                if (data != null && data.Count > 0)
+                {
+                    data = data.OrderByDescending(s => s.RegisterDateOnline).ToList();
+                }
                 return PartialView(data);
             }
             catch (Exception ex)
@@ -1068,6 +1129,7 @@ namespace WEB.CMS.Controllers
                 model.CSNotes = detail.CSNotes;
                 model.VehicleWeightIn = detail.VehicleWeightIn;
                 model.VehicleWeightOut = detail.VehicleWeightOut;
+                model.GoodsType = detail.GoodsType;
                 var update = await _vehicleInspectionRepository.UpdateCar(model);
                 if (status == (int)VehicleStatus.Da_Den_NM)
                 {
@@ -1109,6 +1171,116 @@ namespace WEB.CMS.Controllers
             }
             return PartialView();
         }
+        [HttpGet]
+        public async Task<IActionResult> SuggestObd(string keyword)
+        {
+            try
+            {
+                var data = await _obdConfigRepository.SuggestLatest(keyword, 20);
+                return Ok(new
+                {
+                    status = (int)ResponseType.SUCCESS,
+                    data = data.Select(x => new
+                    {
+                        obdId = x.ObdId,
+                        delivery = x.DeliveryText,
+                        netWeight = x.NetWeightText,
+                        loadingDate = x.LoadingDateText,
+                        version = x.Version
+                    })
+                });
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("SuggestObd - CarController: " + ex);
+            }
+            return Ok(new { status = (int)ResponseType.ERROR, msg = "Không tải được danh sách OBD" });
+        }
+
+        /// <summary>
+        /// Gắn OBD vào xe. Nếu obdId &lt;= 0 thì tạo mới Delivery (NetWeight = 0) rồi gắn.
+        /// </summary>
+        [HttpPost]
+        public async Task<IActionResult> AttachVehicleObd(int vehicleInspectionId, long obdId, string delivery)
+        {
+            try
+            {
+                if (vehicleInspectionId <= 0)
+                {
+                    return Ok(new { status = (int)ResponseType.FAILED, msg = "Bản ghi xe không hợp lệ" });
+                }
+
+                var userId = 0;
+                if (HttpContext.User.FindFirst(ClaimTypes.NameIdentifier) != null)
+                {
+                    userId = Convert.ToInt32(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                }
+
+                if (obdId <= 0)
+                {
+                    if (!ObdValueParser.TryParseDelivery(delivery, out var deliveryValue))
+                    {
+                        return Ok(new { status = (int)ResponseType.FAILED, msg = $"Mã OBD không hợp lệ (chỉ gồm chữ số, tối đa {ObdValueParser.DELIVERY_MAX_LENGTH} số)" });
+                    }
+
+                    var created = await _obdConfigRepository.Insert(deliveryValue, 0, userId);
+                    if (created == null || created.Result <= 0)
+                    {
+                        return Ok(new { status = (int)ResponseType.FAILED, msg = created?.Message ?? "Không tạo được mã OBD mới" });
+                    }
+                    obdId = created.ObdId;
+                    delivery = deliveryValue.ToString();
+                }
+
+                var save = await _obdConfigRepository.AttachToVehicle(vehicleInspectionId, obdId, userId);
+                if (save != null && save.Result > 0)
+                {
+                    return Ok(new
+                    {
+                        status = (int)ResponseType.SUCCESS,
+                        msg = save.Message,
+                        data = new
+                        {
+                            id = save.Id,
+                            obdId = obdId,
+                            delivery = save.Delivery > 0 ? save.Delivery.ToString() : delivery,
+                            netWeight = save.NetWeight.ToString("#,##0.###", System.Globalization.CultureInfo.InvariantCulture)
+                        }
+                    });
+                }
+                return Ok(new { status = (int)ResponseType.FAILED, msg = save?.Message ?? "Gắn OBD không thành công" });
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("AttachVehicleObd - CarController: " + ex);
+            }
+            return Ok(new { status = (int)ResponseType.ERROR, msg = "Đã có lỗi xảy ra, vui lòng liên hệ IT" });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DetachVehicleObd(int vehicleInspectionId, long obdId)
+        {
+            try
+            {
+                if (vehicleInspectionId <= 0 || obdId <= 0)
+                {
+                    return Ok(new { status = (int)ResponseType.FAILED, msg = "Tham số không hợp lệ" });
+                }
+
+                var save = await _obdConfigRepository.DetachFromVehicle(vehicleInspectionId, obdId);
+                if (save != null && save.Result > 0)
+                {
+                    return Ok(new { status = (int)ResponseType.SUCCESS, msg = save.Message });
+                }
+                return Ok(new { status = (int)ResponseType.FAILED, msg = save?.Message ?? "Gỡ OBD không thành công" });
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("DetachVehicleObd - CarController: " + ex);
+            }
+            return Ok(new { status = (int)ResponseType.ERROR, msg = "Đã có lỗi xảy ra, vui lòng liên hệ IT" });
+        }
+
         [HttpPost]
         public async Task<IActionResult> ExportExcel()
         {
@@ -1172,6 +1344,79 @@ namespace WEB.CMS.Controllers
                 });
             }
         }
+        public async Task<IActionResult> InsertWeighInSku(int vehicleInspectionId, decimal weight = 0)
+        {
+            try
+            {
+                var userId = 0;
+                if (HttpContext.User.FindFirst(ClaimTypes.NameIdentifier) != null)
+                    userId = Convert.ToInt32(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                var row = await _vehicleInspectionRepository.InsertWeighInSku(vehicleInspectionId, weight, userId);
+                if (row != null && row.Id > 0)
+                {
+                    return Ok(new { status = (int)ResponseType.SUCCESS, msg = "Thêm SKU thành công", data = row });
+                }
+                return Ok(new { status = (int)ResponseType.FAILED, msg = "Không thêm được SKU" });
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("InsertWeighInSku - CarController: " + ex);
+                return Ok(new { status = (int)ResponseType.ERROR, msg = "Lỗi hệ thống" });
+            }
+        }
+
+        public async Task<IActionResult> UpdateWeighInSku(long id, decimal weight)
+        {
+            try
+            {
+                var userId = 0;
+                if (HttpContext.User.FindFirst(ClaimTypes.NameIdentifier) != null)
+                    userId = Convert.ToInt32(HttpContext.User.FindFirst(ClaimTypes.NameIdentifier).Value);
+                var update = await _vehicleInspectionRepository.UpdateWeighInSku(id, weight, userId);
+                if (update > 0)
+                    return Ok(new { status = (int)ResponseType.SUCCESS, msg = "Cập nhật SKU thành công" });
+                return Ok(new { status = (int)ResponseType.FAILED, msg = "Không cập nhật được SKU" });
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("UpdateWeighInSku - CarController: " + ex);
+                return Ok(new { status = (int)ResponseType.ERROR, msg = "Lỗi hệ thống" });
+            }
+        }
+
+        public async Task<IActionResult> DeleteWeighInSku(long id)
+        {
+            try
+            {
+                var update = await _vehicleInspectionRepository.DeleteWeighInSku(id);
+                if (update > 0)
+                    return Ok(new { status = (int)ResponseType.SUCCESS, msg = "Đã xóa SKU" });
+                return Ok(new { status = (int)ResponseType.FAILED, msg = "Không xóa được SKU" });
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("DeleteWeighInSku - CarController: " + ex);
+                return Ok(new { status = (int)ResponseType.ERROR, msg = "Lỗi hệ thống" });
+            }
+        }
+
+        /// <summary>Xóa toàn bộ SKU của xe (đổi Hàng xá → Hàng bao) và reset ô cân đầu vào.</summary>
+        public async Task<IActionResult> ClearWeighInSkus(int vehicleInspectionId)
+        {
+            try
+            {
+                var update = await _vehicleInspectionRepository.ClearWeighInSkuByVehicleId(vehicleInspectionId);
+                if (update > 0)
+                    return Ok(new { status = (int)ResponseType.SUCCESS, msg = "Đã xóa dữ liệu SKU" });
+                return Ok(new { status = (int)ResponseType.FAILED, msg = "Không xóa được SKU" });
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("ClearWeighInSkus - CarController: " + ex);
+                return Ok(new { status = (int)ResponseType.ERROR, msg = "Lỗi hệ thống" });
+            }
+        }
+
         public async Task<IActionResult> UpdateVehicleWeightIn(int id, int VehicleWeightIn)
         {
             try

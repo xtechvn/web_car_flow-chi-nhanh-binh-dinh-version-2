@@ -57,9 +57,12 @@ XTECH-FRONTEND/
 1. Trình duyệt gửi `POST /api/carregistration/registerV2` về **chính server đang mở trang**.
 2. Server **không** kiểm tra định dạng dữ liệu (giữ như bản gốc; form kiểm tra bắt buộc nhập).
 3. Server tính **đợt** từ giờ `TIME_RESET`: số thứ tự về 1 lúc `TIME_RESET − 5 phút`. **Không chặn** đăng ký trong khoảng nào.
-4. Server chạy **1 script Lua trên Redis** (atomic, không thể chen ngang):
-   rate limit theo IP → biển số đã đăng ký chưa → `INCR` lấy số thứ tự mới.
-5. Server publish message vào RabbitMQ. Nếu RabbitMQ lỗi → lưu tạm vào outbox Redis.
+4. Server cấp số thứ tự (**Redis ưu tiên**, **Mongo fallback** nếu Redis lỗi):
+   - Redis: script Lua atomic — sync floor từ Mongo → rate limit IP → khóa biển số → `INCR`.
+   - Redis lỗi: tăng counter atomic trên Mongo (`RegistrationCounters`) + khóa biển (`RegistrationPlateLocks`).
+   - Khi Redis sống lại: lần cấp tiếp theo sync `floor = max(Mongo counter, max QueueNumber đợt)` rồi `INCR` tiếp (không trùng / không lùi số).
+5. Server publish message vào RabbitMQ. Nếu RabbitMQ lỗi → lưu tạm vào outbox Redis
+   (Redis cũng down thì vẫn trả số cho user; dùng CMS Recovery Mongo→SQL).
 6. Ghi log MongoDB, bắn SignalR cho `/ListData`.
 7. Trả số thứ tự về trình duyệt ngay (không chờ ghi SQL).
 8. n8n đọc queue → gọi API WEB.CMS `/api/registration-queue/receive` → ghi `VehicleInspection` → báo CMS (mục 7).

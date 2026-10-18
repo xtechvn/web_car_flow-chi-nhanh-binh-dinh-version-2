@@ -158,6 +158,48 @@ Các màn CMS đọc dữ liệu này: `Car/RegisteredVehicle`, `Car/CartoFactor
 - SP lấy mốc đầu đợt = giờ đăng ký của xe `RecordNumber = 1` đăng ký sau `TIME_RESET − 5 phút` của hôm trước.
 - Hệ quả: nếu xe số 1 của đợt chưa có trong SQL thì danh sách trống → dùng chức năng đẩy lại ở mục 4.2 để bổ sung xe bị thiếu.
 
+### 4.1c Cột OBD nhận hàng (bảng Chưa xử lý)
+
+- UI: token input sau cột **Tải trọng xe (kg)**; chọn/suggest/tạo mới rồi auto-save.
+- Suggest: `GET /Car/SuggestObd` → mã thuộc **ngày nghiệp vụ hiện tại** + **version mới nhất** (`SP_SuggestObdConfigLatest`), dropdown 2 cột OBD | Loading Date.
+- Validate Delivery giống ObdSetting (`ObdValueParser`, tối đa 18 chữ số).
+- Tạo mới: `POST /Car/AttachVehicleObd` với `obdId=0` → gọi `/ObdSetting/Insert` logic (`NetWeight = 0`) rồi gắn vào xe.
+- Lưu: bảng quan hệ `VehicleInspectionObd` (1 xe nhiều OBD; 1 OBD gắn được nhiều xe). Script: `Scripts/vehicle_inspection_obd.sql`.
+- Export Excel CartoFactory có thêm cột **OBD nhận hàng**.
+
+### 4.1b Rule cut-off: danh sách đăng ký vs đến nhà máy
+
+Giờ cut-off lấy **động** từ `AllCode.TIME_RESET` (màn `/Configuration`, vd 17:23).
+
+| Khoảng thời gian | Danh sách | SQL | Realtime (Redis → SignalR) |
+|---|---|---|---|
+| Từ 00:00 đến cut-off hôm nay | Xe đến nhà máy (`Car/CartoFactory`) | `SP_GetListVehicleInspection`: `RegisterDateOnline` trong `[mốc xe số 1, cut-off hôm nay]` | Kênh `Add_ReceiveRegistration_BinhDinh` → `ReceiveRegistration` |
+| Từ cut-off đến 24:00 | Xe đăng ký online (`Car/RegisteredVehicle`) | `SP_GetListRegisteredVehicle`: `RegisterDateOnline >= cut-off hôm nay` | Kênh `..._DK` → `ReceiveRegistration_DK` |
+| Sau 00:00 ngày hôm sau | Xe đăng ký sau cut-off hôm trước chuyển sang CartoFactory | Cùng SP CartoFactory (cửa sổ mới) | — |
+
+`RegistrationImportService` chọn kênh publish theo `RegistrationTime` so với cut-off hôm nay (đọc `TIME_RESET` từ DB). Không đẩy nhầm vào CartoFactory sau cut-off → F5 không còn “mất dòng hub”.
+
+```mermaid
+sequenceDiagram
+    participant API as RegistrationImportService
+    participant AC as AllCode.TIME_RESET
+    participant R as Redis Pub/Sub
+    participant SUB as RedisSubscriberService
+    participant CF as cartofactory.js
+    participant RV as registeredvehicle.js
+
+    API->>AC: Đọc giờ cut-off hôm nay
+    alt RegistrationTime >= cut-off
+        API->>R: PUBLISH ..._DK
+        R-->>SUB: message
+        SUB->>RV: ReceiveRegistration_DK
+    else RegistrationTime < cut-off
+        API->>R: PUBLISH Add_ReceiveRegistration_BinhDinh
+        R-->>SUB: message
+        SUB->>CF: ReceiveRegistration
+    end
+```
+
 ### 4.2 Đẩy lại xe bị thiếu từ MongoDB
 
 XTECH-FRONTEND lưu mọi xe đăng ký vào MongoDB `CarLog.Data_Car_Binh_Duong` ngay khi cấp số.
@@ -228,7 +270,8 @@ sequenceDiagram
 |---|---|---|
 | `RegistrationConsumer:ApiKey` | (bắt buộc) | Key n8n gửi ở header `X-Api-Key`. Để trống → mọi request bị 401 |
 | `RegistrationConsumer:Site` | `BINH_DUONG` | Chỉ nhận message có `Site` trùng. Để trống → không kiểm tra |
-| `RegistrationConsumer:RealtimeChannel` | `Add_ReceiveRegistration_BinhDinh` | Kênh Redis mà `RedisSubscriberService` đang subscribe |
+| `RegistrationConsumer:RealtimeChannel` | `Add_ReceiveRegistration_BinhDinh` | Kênh Redis → SignalR `ReceiveRegistration` (CartoFactory / xe đến nhà máy) |
+| `RegistrationConsumer:RealtimeChannelRegistered` | `Add_ReceiveRegistration_BinhDinh_DK` | Kênh Redis → SignalR `ReceiveRegistration_DK` (RegisteredVehicle / xe đăng ký online) |
 | `RegistrationConsumer:ProcessedKeyHours` | `72` | Thời gian nhớ `MessageId` đã xử lý |
 | `Redis:Database:db_common` | `15` | DB Redis lưu key chống trùng |
 | `Queue:QueueSyncES` | `QUEUE_AUDIO_TEXT_TO_SPEED` | Queue tạo audio đọc biển số |

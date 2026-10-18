@@ -199,31 +199,42 @@ $(document).ready(function () {
         }
         return `
         <tr class="CartoFactory_${item.id}" data-queue="${item.createTime}" >
-            <td>${item.queueNumber}</td>
-            <td>${item.createTime}</td>
-            <td class="name-td">${item.name}</td>
+            <td class="pin pin-stt">${item.queueNumber}</td>
+            <td class="pin pin-time">${item.createTime}</td>
+            <td class="pin pin-plate"><b>${item.plateNumber}</b></td>
+            <td class="name-td text-left">${item.name}</td>
             <td>
                 <div>${item.gplx}</div>
                 <div>${item.phoneNumber}</div>
             </td>
-            <td>${item.plateNumber}</td>
             <td>${item.referee}</td>
             <td>${item.camp}</td>
-            <td><textarea class="BV_Note" name="BV_Note" ></textarea></td>
-            <td>
-               ${html_tt}
-
-            </td>
+            <td><textarea class="BV_Note" name="BV_Note"></textarea></td>
+            <td>${html_tt}</td>
             <td>
                 <div class="status-dropdown">
-                    <button class="dropdown-toggle " data-options='${jsonString}'>
-                        Blank
-                    </button>
+                    <button class="dropdown-toggle " data-options='${jsonString}'>Blank</button>
                 </div>
-
             </td>
-
         </tr>`;
+    }
+
+    function parseRegDateTime(str) {
+        if (!str) return 0;
+        var p = String(str).trim().split(/[\s/:]+/);
+        if (p.length < 5) return 0;
+        return new Date(parseInt(p[4], 10), parseInt(p[3], 10) - 1, parseInt(p[2], 10), parseInt(p[0], 10), parseInt(p[1], 10), 0).getTime();
+    }
+
+    function sortRegisteredTable() {
+        var tbody = document.getElementById("dataBody-1");
+        if (!tbody) return;
+        var rows = Array.from(tbody.querySelectorAll("tr"));
+        rows.sort(function (a, b) {
+            return parseRegDateTime(b.dataset.queue) - parseRegDateTime(a.dataset.queue);
+        });
+        tbody.innerHTML = "";
+        rows.forEach(function (r) { tbody.appendChild(r); });
     }
 
     const connection = new signalR.HubConnectionBuilder()
@@ -237,8 +248,9 @@ $(document).ready(function () {
     connection.off("ReceiveRegistration_DK");
     connection.on("ReceiveRegistration_DK", function (item) {
         const tbody = document.getElementById("dataBody-1");
+        if (!tbody) return;
         tbody.insertAdjacentHTML("beforeend", renderRow(item));
-      
+        sortRegisteredTable();
     });
     connection.onreconnecting(error => {
         console.warn("🔄 Đang reconnect...", error);

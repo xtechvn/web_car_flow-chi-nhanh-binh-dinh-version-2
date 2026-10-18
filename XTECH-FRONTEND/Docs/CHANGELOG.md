@@ -4,6 +4,50 @@ Mỗi lần thay đổi code phải thêm một mục mới ở đầu file: ng�
 
 ---
 
+## 2026-10-17 – Fallback cấp số thứ tự khi Redis lỗi (Mongo)
+
+**Mục đích:** Tắt Redis vẫn đăng ký được; bật lại Redis thì số tiếp tục từ max đã cấp (không trùng/nhảy lùi).
+
+**Cơ chế**
+
+1. Ưu tiên Redis Lua: sync `floor` từ Mongo → rate limit → khóa biển → `INCR`.
+2. Redis lỗi / mất kết nối → Mongo atomic counter (`RegistrationCounters`) + khóa biển (`RegistrationPlateLocks`).
+3. Mỗi lần Redis cấp số thành công → `EnsureCounterAtLeast` Mongo (best-effort) để lần fallback sau không thấp hơn.
+4. Publish RabbitMQ lỗi mà Redis outbox cũng fail → vẫn trả thành công cho user; log Telegram (dùng CMS Recovery Mongo→SQL).
+
+**Sửa**
+
+| File | Thay đổi |
+|---|---|
+| `Services/Registration/RedisQueueNumberAllocator.cs` | Lua thêm `ARGV[5]=floor`; không còn implement `IQueueNumberAllocator` trực tiếp |
+| `Services/Registration/MongoQueueNumberStore.cs` | **Mới** – floor/max, allocate fallback, sync counter |
+| `Services/Registration/ResilientQueueNumberAllocator.cs` | **Mới** – Redis rồi fallback Mongo |
+| `Services/Registration/IQueueNumberAllocator.cs` | `AllocateAsync(..., RegistrationWindow, ...)` |
+| `Controllers/API/CarRegistration/CarRegistrationController.cs` | Truyền `window`; bọc outbox khi Redis down |
+| `Services/Queue/PendingRegistrationStore.cs` | Kiểm tra `IsConnected` trước khi push |
+| `Program.cs` | DI: Redis + Mongo store + `ResilientQueueNumberAllocator` |
+| `Docs/README.md` | Mục cấp số / fallback |
+
+**Lưu ý vận hành:** Deploy lại **XTECH-FRONTEND** và restart IIS/app pool. Test: tắt Redis → đăng ký vẫn ra số; bật Redis → số tăng tiếp từ max. Collection Mongo tự tạo: `RegistrationCounters`, `RegistrationPlateLocks` (cùng DB `catalog_log`).
+
+---
+
+## 2026-10-16 – Đẩy lỗi đăng ký lên Telegram chi tiết hơn
+
+**Mục đích:** Khi form báo "Lỗi hệ thống", Telegram nhận đủ biển số / IP / loại exception / stack
+(trước đó chỉ gửi `ex.Message` và thường im lặng vì đọc `appsettings.json` sai đường dẫn dưới IIS).
+
+**Sửa**
+
+| File | Thay đổi |
+|---|---|
+| `Utilities/LogHelper.cs` | Đọc `appsettings.json` từ `BaseDirectory`; trim `bot_group_id`; cắt tin ≤ 4000 ký tự; nếu gửi Telegram lỗi thì ghi `Logs/telegram_fail.log`; thêm `InsertRegistrationError` |
+| `Controllers/API/CarRegistration/CarRegistrationController.cs` | `registerV2`: kiểm tra thiếu trường bắt buộc; catch gửi Telegram đầy đủ ngữ cảnh |
+
+**Lưu ý vận hành:** Deploy lại XTECH-FRONTEND. Kiểm tra nhóm Telegram `BotSetting:bot_group_id`. Nếu vẫn không thấy tin, mở `Logs/telegram_fail.log` trên server.
+
+---
+
 ## 2026-10-16 – Khôi phục quy tắc gốc của dự án
 
 Bỏ các quy tắc tự thêm ở bản 2026-10-04 mà dự án gốc không có.

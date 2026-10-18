@@ -38,6 +38,11 @@ namespace Repositories.IRepositories
         Task<string> ExportSummaryReport(List<CartoFactoryModel> data, string FilePath);
         Task<string> ExportTimeProductDelivery(List<VehicleInspectionTimeProductDeliveryModel> data, string FilePath);
         Task<List<VehicleInspectionTimeProductDeliveryModel>> GetListVehicleInspectionTimeProductDelivery(DateTime? FromDate, DateTime? ToDate, int LoadType);
+        Task<List<VehicleWeighInSkuModel>> GetWeighInSkuByVehicleIds(IEnumerable<int> vehicleIds);
+        Task<VehicleWeighInSkuModel> InsertWeighInSku(int vehicleInspectionId, decimal weight, int? userId);
+        Task<int> UpdateWeighInSku(long id, decimal weight, int? userId);
+        Task<int> DeleteWeighInSku(long id);
+        Task<int> ClearWeighInSkuByVehicleId(int vehicleInspectionId);
 
     }
 }

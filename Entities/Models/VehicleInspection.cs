@@ -46,5 +46,7 @@ namespace Entities.Models
         public string CSNotes { get; set; }
         public decimal? VehicleWeightIn { get; set; }
         public decimal? VehicleWeightOut { get; set; }
+        /// <summary>Loại hàng: AllCode GOODS_TYPE (0 Hàng bao, 1 Hàng xá).</summary>
+        public int? GoodsType { get; set; }
     }
 }

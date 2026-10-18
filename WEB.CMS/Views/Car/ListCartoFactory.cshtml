@@ -4,6 +4,8 @@
     Layout = null;
     var AllCode = (List<AllCode>)ViewBag.AllCode;
     var LoadingType = (List<AllCode>)ViewBag.LoadingType;
+    var isProcessed = ViewBag.type == 1;
+    var timeHeader = isProcessed ? "Giờ xe đến" : "Giờ đăng ký online";
 }
 @model List<CartoFactoryModel>
 <style>
@@ -15,99 +17,107 @@
         font-weight: 600;
         color: #fff;
     }
-
-    .badge-danger {
-        background-color: red; /* đỏ */
-    }
-
-    .badge-warning {
-        background-color: orange; /* vang */
-    }
-
-    .badge-success {
-        background-color: #4BAC4D; /* xanh */
-    }
-    .name-td{
+    .badge-danger { background-color: red; }
+    .badge-warning { background-color: orange; }
+    .badge-success { background-color: #4BAC4D; }
+    .name-td {
         white-space: normal !important;
         word-break: break-word;
+        max-width: 220px;
     }
 </style>
-@if (Model != null && Model.Count > 0)
-{
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th id="TotalCar-@ViewBag.type" colspan="5"><strong style="color: red;font-size: 16px;">Tổng số xe: @ViewBag.count </strong></th>
-                <th id="SumVehicleLoad-@ViewBag.type" colspan="5"><strong style="color: red;font-size: 16px;">Tải trọng xe: @ViewBag.sum kg</strong></th>
-              
-            </tr>
-            <tr>
-                <th>STT</th>
-                @if (ViewBag.type == 1)
-                {
-                    <th>Giờ xe đến</th>
-                }
-                else
-                {
-                    <th>Giờ đăng ký online</th>
-                }
-                <th style="max-width:245px!important">Tên khách hàng (Trại, đại lý)</th>
-                <th>Tên lái xe</th>
 
-                <th>Biển số xe</th>
-                <th>Tải trọng xe (kg)</th>
-                <th style="max-width:150px!important">KH Ghi chú</th>
-                <th style="max-width:150px!important">BV ghi chú</th>
-                @if (ViewBag.type == 1)
-                {
-                    <th>TT đăng kiểm</th>
-                }
-                else
-                {
-                    <th>TT đăng kiểm</th>
-                }
-                <th>Tình trạng xe</th>
+<table class="data-table">
+    <thead>
+        @if (Model != null && Model.Count > 0)
+        {
+            <tr>
+                <th id="TotalCar-@ViewBag.type" colspan="5" class="text-left">
+                    <strong style="color: red;font-size: 14px;">Tổng số xe: @ViewBag.count </strong>
+                </th>
+                <th id="SumVehicleLoad-@ViewBag.type" colspan="@(isProcessed ? 5 : 6)" class="text-left">
+                    <strong style="color: red;font-size: 14px;">Tải trọng xe: @ViewBag.sum kg</strong>
+                </th>
             </tr>
-        </thead>
-        <tbody id="dataBody-@ViewBag.type">
+        }
+        <tr>
+            <th class="pin pin-stt">STT</th>
+            <th class="pin pin-time">@timeHeader</th>
+            <th class="pin pin-plate">Biển số xe</th>
+            <th class="text-left">Tên khách hàng (Trại, đại lý)</th>
+            <th>Tên lái xe</th>
+            <th>Tải trọng xe (kg)</th>
+            @if (!isProcessed)
+            {
+                <th class="obd-col">OBD nhận hàng</th>
+            }
+            <th>KH Ghi chú</th>
+            <th>BV ghi chú</th>
+            <th>TT đăng kiểm</th>
+            <th>Tình trạng xe</th>
+        </tr>
+    </thead>
+    <tbody id="dataBody-@ViewBag.type">
+        @if (Model != null && Model.Count > 0)
+        {
             @foreach (var item in Model)
             {
-                <tr class="CartoFactory_@item.Id" data-queue=" @(ViewBag.type == 1 ? item.VehicleArrivalDate != null ? ((DateTime)item.VehicleArrivalDate).ToString("HH:mm dd/MM/yyyy") : "" : item.RegisterDateOnline != null ? ((DateTime)item.RegisterDateOnline).ToString("HH:mm dd/MM/yyyy") : "")">
-                    <td>@item.RecordNumber</td>
-                    @if (ViewBag.type == 1)
-                    {
-                        <td>@(item.VehicleArrivalDate != null ? ((DateTime)item.VehicleArrivalDate).ToString("HH:mm dd/MM/yyyy") : "")</td>
-                    }
-                    else
-                    {
-                        <td>@(item.RegisterDateOnline != null ? ((DateTime)item.RegisterDateOnline).ToString("HH:mm dd/MM/yyyy") : "")</td>
-                    }
-
-                    <td class="name-td" style="max-width:245Px!important">  
-                        <div style="white-space: pre-line;">
-                            @item.CustomerName
-                        </div>
+                var queueVal = isProcessed
+                    ? (item.VehicleArrivalDate != null ? ((DateTime)item.VehicleArrivalDate).ToString("HH:mm dd/MM/yyyy") : "")
+                    : (item.RegisterDateOnline != null ? ((DateTime)item.RegisterDateOnline).ToString("HH:mm dd/MM/yyyy") : "");
+                <tr class="CartoFactory_@item.Id" data-queue="@queueVal">
+                    <td class="pin pin-stt">@item.RecordNumber</td>
+                    <td class="pin pin-time">@queueVal</td>
+                    <td class="pin pin-plate"><b>@item.VehicleNumber</b></td>
+                    <td class="name-td text-left">
+                        <div style="white-space: pre-line;">@item.CustomerName</div>
                     </td>
                     <td>
                         <div>@item.DriverName</div>
                         <div>@item.PhoneNumber</div>
-
-                    </td>
-
-                    <td>
-                        @item.VehicleNumber
                     </td>
                     <td>@item.VehicleLoad</td>
+                    @if (!isProcessed)
+                    {
+                        <td class="obd-col">
+                            @{
+                                var vi = System.Globalization.CultureInfo.GetCultureInfo("vi-VN");
+                                var obdTotal = item.ObdList != null ? item.ObdList.Sum(x => x.NetWeight) : 0m;
+                                var obdTotalText = obdTotal.ToString("#,##0.###", vi);
+                            }
+                            <div class="obd-token" data-vehicle-id="@item.Id">
+                                <div class="obd-token__total">Tổng: <b class="obd-token__total-value">@obdTotalText</b> kg</div>
+                                <div class="obd-token__chips">
+                                    @if (item.ObdList != null)
+                                    {
+                                        foreach (var obd in item.ObdList)
+                                        {
+                                            var nwVi = obd.NetWeight.ToString("#,##0.###", vi);
+                                            <span class="obd-token__chip" data-obd-id="@obd.ObdId" data-delivery="@obd.Delivery" data-net-weight="@obd.NetWeightText" title="Net Weight: @nwVi kg">
+                                                <span class="obd-token__chip-text">@obd.Delivery: @nwVi kg</span>
+                                                <button type="button" class="obd-token__chip-remove" title="Gỡ">&times;</button>
+                                            </span>
+                                        }
+                                    }
+                                </div>
+                                <span class="obd-token__input-wrap">
+                                    <input type="text" class="obd-token__input" placeholder="Nhập mã OBD" inputmode="numeric" autocomplete="off" maxlength="18" />
+                                    <button type="button" class="obd-token__input-clear" title="Xóa" style="display:none;">&times;</button>
+                                </span>
+                                <div class="obd-token__dropdown" style="display:none;"></div>
+                            </div>
+                        </td>
+                    }
                     <td>@item.LicenseNumber</td>
                     <td>
-                    @if (ViewBag.type == 1)
-                    {
-                       @item.ProtectNotes
-                    }
-                    else
-                    {
-                        <textarea  class="BV_Note" name="BV_Note" value="@item.ProtectNotes">@item.ProtectNotes</textarea>
-                    }
+                        @if (isProcessed)
+                        {
+                            @item.ProtectNotes
+                        }
+                        else
+                        {
+                            <textarea class="BV_Note" name="BV_Note">@item.ProtectNotes</textarea>
+                        }
                     </td>
                     <td>
                         @{
@@ -120,66 +130,28 @@
                                     <span class="badge badge-success">Còn hạn</span>
                                     break;
                                 case 3:
-                                    @:<span class="badge badge-warning">Sắp hết hạn</span>
+                                    <span class="badge badge-warning">Sắp hết hạn</span>
                                     break;
                                 case 4:
-                                    @:<span class="badge badge-danger">Hết hạn</span>
+                                    <span class="badge badge-danger">Hết hạn</span>
                                     break;
-
                             }
                         }
                     </td>
-
-
                     <td>
                         <div class="status-dropdown">
                             <button class="dropdown-toggle" data-options='[
-                                            @foreach (var allcode in AllCode)
-                                            {
-
-                                                        @:{"text":"@allcode.Description","value":"@allcode.CodeValue"}@(allcode != AllCode.Last() ? "," : "")
-
-                                            }
-                                                                        ]'>
+                                @foreach (var allcode in AllCode)
+                                {
+                                    @:{"text":"@allcode.Description","value":"@allcode.CodeValue"}@(allcode != AllCode.Last() ? "," : "")
+                                }
+                            ]'>
                                 @item.VehicleStatusName
                             </button>
                         </div>
                     </td>
                 </tr>
             }
-
-        </tbody>
-    </table>
-
-}
-else
-{
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>STT</th>
-                @if (ViewBag.type == 1)
-                {
-                    <th>Giờ xe đến</th>
-                }
-                else
-                {
-                    <th>Giờ đăng ký online</th>
-                }
-                <th style="max-width:200px!important">Tên khách hàng (Trại, đại lý)</th>
-                <th>Tên lái xe</th>
-                <th>Biển số xe</th>
-                <th>Tải trọng xe (kg)</th>
-                <th style="max-width:150px!important">KH Ghi chú</th>
-                <th style="max-width:150px!important">BV ghi chú</th>
-
-                <th>TT đăng kiểm</th>
-
-                <th>Tình trạng xe</th>
-            </tr>
-        </thead>
-        <tbody id="dataBody-@ViewBag.type">
-        </tbody>
-    </table>
-}
-
+        }
+    </tbody>
+</table>

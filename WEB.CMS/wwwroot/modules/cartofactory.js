@@ -1,5 +1,6 @@
 $(document).ready(function () {
     _cartofactory.init();
+    _cartofactory.BindObdTokenEvents();
     var input_chua_xu_ly = document.getElementById("input_chua_xu_ly");
     input_chua_xu_ly.addEventListener("keypress", function (event) {
         // If the user presses the "Enter" key on the keyboard
@@ -256,34 +257,26 @@ $(document).ready(function () {
         }
         return `
         <tr class="CartoFactory_${item.id}" data-queue="${formatted}" >
-            <td>${item.recordNumber}</td>
-            <td>${formatted}</td>
-            <td class="name-td">
-                <div style="white-space: pre-line;">
-                    ${item.customerName}
-                </div>
+            <td class="pin pin-stt">${item.recordNumber}</td>
+            <td class="pin pin-time">${formatted}</td>
+            <td class="pin pin-plate"><b>${item.vehicleNumber}</b></td>
+            <td class="name-td text-left">
+                <div style="white-space: pre-line;">${item.customerName}</div>
             </td>
             <td>
                 <div>${item.driverName}</div>
                 <div>${item.phoneNumber}</div>
             </td>
-            <td>${item.vehicleNumber}</td>
             <td>${item.vehicleLoad}</td>
+            <td class="obd-col">${_cartofactory.RenderObdToken(item)}</td>
             <td>${item.licenseNumber}</td>
-            <td><textarea class="BV_Note" name="BV_Note" value="${item.protectNotes == null ? '' : item.protectNotes}">${item.protectNotes == null ? '' : item.protectNotes}</textarea></td>
-            <td>
-               ${html_tt}
-
-            </td>
+            <td><textarea class="BV_Note" name="BV_Note">${item.protectNotes == null ? '' : item.protectNotes}</textarea></td>
+            <td>${html_tt}</td>
             <td>
                 <div class="status-dropdown">
-                    <button class="dropdown-toggle " data-options='${jsonString}'>
-                        ${item.vehicleStatusName}
-                    </button>
+                    <button class="dropdown-toggle " data-options='${jsonString}'>${item.vehicleStatusName}</button>
                 </div>
-
             </td>
-
         </tr>`;
     }
 
@@ -304,36 +297,31 @@ $(document).ready(function () {
                 break;
 
         }
+        // Cột OBD bắt buộc khớp ListCartoFactory (Chưa xử lý) — thiếu sẽ lệch cột khi ReceiveRegistration
+        var vehicleId = item.id != null ? item.id : (item.bookingid != null ? item.bookingid : '');
+        var obdItem = { id: vehicleId, obdList: item.obdList || item.ObdList || [] };
         return `
-        <tr class="CartoFactory_${item.id}" data-queue="${item.createTime}" >
-            <td>${item.queueNumber}</td>
-            <td>${item.createTime}</td>
-            <td class="name-td">
-               <div style="white-space: pre-line;">
-                    ${item.name}
-                </div>
-                </td>
-             <td>
+        <tr class="CartoFactory_${vehicleId}" data-queue="${item.createTime}" >
+            <td class="pin pin-stt">${item.queueNumber}</td>
+            <td class="pin pin-time">${item.createTime}</td>
+            <td class="pin pin-plate"><b>${item.plateNumber}</b></td>
+            <td class="name-td text-left">
+                <div style="white-space: pre-line;">${item.name}</div>
+            </td>
+            <td>
                 <div>${item.gplx}</div>
                 <div>${item.phoneNumber}</div>
             </td>
-            <td>${item.plateNumber}</td>
             <td>${item.referee}</td>
+            <td class="obd-col">${_cartofactory.RenderObdToken(obdItem)}</td>
             <td>${item.camp}</td>
-            <td><textarea class="BV_Note" name="BV_Note" ></textarea></td>
-            <td>
-                ${html_tt}
-
-            </td>
+            <td><textarea class="BV_Note" name="BV_Note"></textarea></td>
+            <td>${html_tt}</td>
             <td>
                 <div class="status-dropdown">
-                    <button class="dropdown-toggle " data-options='${jsonString}'>
-                       Blank
-                    </button>
+                    <button class="dropdown-toggle " data-options='${jsonString}'>Blank</button>
                 </div>
-
             </td>
-
         </tr>`;
     }
     function renderRow3(item) {
@@ -362,31 +350,25 @@ $(document).ready(function () {
         }
         return `
         <tr class="CartoFactory_${item.id}" data-queue="${formatted}" >
-            <td>${item.recordNumber}</td>
-            <td>${formatted}</td>
-            <td class="name-td">
-                <div style="white-space: pre-line;">
-                      ${item.customerName}
-                </div>
+            <td class="pin pin-stt">${item.recordNumber}</td>
+            <td class="pin pin-time">${formatted}</td>
+            <td class="pin pin-plate"><b>${item.vehicleNumber}</b></td>
+            <td class="name-td text-left">
+                <div style="white-space: pre-line;">${item.customerName}</div>
             </td>
             <td>
                 <div>${item.driverName}</div>
                 <div>${item.phoneNumber}</div>
             </td>
-            <td>${item.vehicleNumber}</td>
             <td>${item.vehicleLoad}</td>
             <td>${item.licenseNumber}</td>
             <td>${item.protectNotes == null ? '' : item.protectNotes}</td>
-               <td>${html_tt}</td>
+            <td>${html_tt}</td>
             <td>
                 <div class="status-dropdown">
-                    <button class="dropdown-toggle " data-options='${jsonString}'>
-                        ${item.vehicleStatusName}
-                    </button>
+                    <button class="dropdown-toggle " data-options='${jsonString}'>${item.vehicleStatusName}</button>
                 </div>
-
             </td>
-
         </tr>`;
     }
     // Hàm sắp xếp lại tbody theo QueueNumber tăng dần
@@ -405,12 +387,14 @@ $(document).ready(function () {
     }
     function sortTable() {
         const tbody = document.getElementById("dataBody-0");
+        if (!tbody) return;
         const rows = Array.from(tbody.querySelectorAll("tr"));
 
+        // Giờ đăng ký online mới nhất lên đầu
         rows.sort((a, b) => {
             const timeA = parseDateTime(a.dataset.queue);
             const timeB = parseDateTime(b.dataset.queue);
-            return timeA - timeB;
+            return timeB - timeA;
         });
 
         tbody.innerHTML = "";
@@ -441,10 +425,38 @@ $(document).ready(function () {
     });
     connection.off("ReceiveRegistration");
     connection.on("ReceiveRegistration", function (item) {
+        // Sau cut-off hôm nay → không hiện trên CartoFactory (chỉ hiện từ 00:00 ngày sau qua SQL)
+        if (isRegistrationAfterCutoff(item)) {
+            return;
+        }
         const tbody = document.getElementById("dataBody-0");
         tbody.insertAdjacentHTML("beforeend", renderRow2(item));
         sortTable(); // sắp xếp lại ngay khi thêm
     });
+
+    function isRegistrationAfterCutoff(item) {
+        try {
+            var cutoff = (window.CART_CUTOFF_TIME || '17:55').split(':');
+            var ch = parseInt(cutoff[0], 10) || 17;
+            var cm = parseInt(cutoff[1], 10) || 55;
+            var now = new Date();
+            var cutoffToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), ch, cm, 0);
+            var reg = null;
+            if (item.registrationTime) {
+                reg = new Date(item.registrationTime);
+            } else if (item.createTime) {
+                // "HH:mm dd/MM/yyyy"
+                var p = String(item.createTime).trim().split(/[\s/:]+/);
+                if (p.length >= 5) {
+                    reg = new Date(parseInt(p[4], 10), parseInt(p[3], 10) - 1, parseInt(p[2], 10), parseInt(p[0], 10), parseInt(p[1], 10), 0);
+                }
+            }
+            if (!reg || isNaN(reg.getTime())) return false;
+            return reg >= cutoffToday;
+        } catch (e) {
+            return false;
+        }
+    }
     connection.off("ListProcessingIsLoading_Da_SL");
     connection.on("ListProcessingIsLoading_Da_SL", function (item) {
         $('.CartoFactory_' + item.id).remove();
@@ -525,6 +537,9 @@ var _cartofactory = {
             success: function (result) {
                 $('#imgLoading').hide();
                 $('#data_chua_xu_ly').html(result);
+                $('#data_chua_xu_ly .obd-token').each(function () {
+                    _cartofactory.SyncObdTotal($(this));
+                });
             },
             error: function (XMLHttpRequest, textStatus, errorThrown) {
                 console.log("Status: " + textStatus);
@@ -635,4 +650,12 @@ var _cartofactory = {
             }
         });
     },
+
+    // OBD widget → shared _obdToken (obd-token.js)
+    FormatObdChip: function (obdId, delivery, netWeight) { return _obdToken.formatChip(obdId, delivery, netWeight); },
+    ParseNetWeight: function (text) { return _obdToken.parseNetWeight(text); },
+    FormatNetWeightVi: function (value) { return _obdToken.formatNetWeightVi(value); },
+    SyncObdTotal: function ($wrap) { _obdToken.syncTotal($wrap); },
+    RenderObdToken: function (item) { return _obdToken.render(item); },
+    BindObdTokenEvents: function () { _obdToken.bindEvents(); },
 }

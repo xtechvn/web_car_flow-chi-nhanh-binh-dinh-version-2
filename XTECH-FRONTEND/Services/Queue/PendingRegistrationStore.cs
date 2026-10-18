@@ -25,9 +25,22 @@ namespace XTECH_FRONTEND.Services.Queue
 
         private IDatabase Db => _redis.GetDatabase(_options.RedisDb);
 
-        public Task PushAsync(RegistrationQueueMessage message)
+        public async Task PushAsync(RegistrationQueueMessage message)
         {
-            return Db.ListLeftPushAsync(Key, JsonConvert.SerializeObject(message));
+            try
+            {
+                if (!_redis.IsConnected)
+                {
+                    throw new InvalidOperationException("Redis chưa kết nối — không lưu được outbox");
+                }
+                await Db.ListLeftPushAsync(Key, JsonConvert.SerializeObject(message));
+            }
+            catch (Exception ex)
+            {
+                // Redis down: không làm fail cả đăng ký (số đã cấp). Log để vận hành xử lý.
+                System.Diagnostics.Debug.WriteLine("PendingRegistrationStore.PushAsync: " + ex.Message);
+                throw;
+            }
         }
 
         /// <summary>Lấy message cũ nhất ra khỏi outbox, null nếu rỗng.</summary>

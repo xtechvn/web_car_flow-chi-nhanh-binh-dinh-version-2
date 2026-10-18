@@ -54,7 +54,9 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(_ =>
     return ConnectionMultiplexer.Connect(redisOptions);
 });
 builder.Services.AddSingleton<IRegistrationScheduleService, RegistrationScheduleService>();
-builder.Services.AddSingleton<IQueueNumberAllocator, RedisQueueNumberAllocator>();
+builder.Services.AddSingleton<RedisQueueNumberAllocator>();
+builder.Services.AddSingleton<MongoQueueNumberStore>();
+builder.Services.AddSingleton<IQueueNumberAllocator, ResilientQueueNumberAllocator>();
 builder.Services.AddSingleton<IRegistrationQueuePublisher, RabbitMqRegistrationPublisher>();
 builder.Services.AddSingleton<PendingRegistrationStore>();
 builder.Services.AddHostedService<PendingRegistrationRepublisher>();

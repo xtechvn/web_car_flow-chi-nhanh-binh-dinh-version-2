@@ -23,6 +23,6 @@ namespace XTECH_FRONTEND.Services.Registration
 
     public interface IQueueNumberAllocator
     {
-        Task<AllocationResult> AllocateAsync(string plateNumber, DateTime businessDate, string clientIp);
+        Task<AllocationResult> AllocateAsync(string plateNumber, RegistrationWindow window, string clientIp);
     }
 }

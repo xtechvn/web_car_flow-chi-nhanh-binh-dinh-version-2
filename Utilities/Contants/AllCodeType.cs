@@ -15,6 +15,8 @@
         public static string Loading_Type = "Loading_Type";
         public static string TIME_RESET = "TIME_RESET";
         public static string Rank_Type = "Rank_Type";
+        /// <summary>Loại hàng cân đầu vào: Hàng bao / Hàng xá.</summary>
+        public static string GOODS_TYPE = "GOODS_TYPE";
 
 
     }

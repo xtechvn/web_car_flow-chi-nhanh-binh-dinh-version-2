@@ -238,16 +238,33 @@ namespace XTECH_FRONTEND.Controllers.CarRegistration
         [HttpPost("registerV2")]
         public async Task<ActionResult<CarRegistrationResponse>> RegisterCarV2([FromBody] CarRegistrationRequest request)
         {
+            string plateForLog = request?.PlateNumber;
+            string ipForLog = null;
             try
             {
                 var stopwatch = Stopwatch.StartNew();
                 var now = DateTime.Now;
+                ipForLog = GetClientIp();
+
+                if (request == null
+                    || string.IsNullOrWhiteSpace(request.PlateNumber)
+                    || string.IsNullOrWhiteSpace(request.PhoneNumber)
+                    || string.IsNullOrWhiteSpace(request.Name)
+                    || string.IsNullOrWhiteSpace(request.GPLX)
+                    || string.IsNullOrWhiteSpace(request.Referee))
+                {
+                    return BadRequest(new CarRegistrationResponse
+                    {
+                        Success = false,
+                        Message = "Vui lòng nhập đủ biển số, điện thoại, tên khách hàng, tên lái xe và tải trọng"
+                    });
+                }
 
                 var window = await _scheduleService.GetCurrentWindowAsync(now);
 
                 var plateNumber = request.PlateNumber.Trim().ToUpper();
-                var allocation = await _queueNumberAllocator.AllocateAsync(plateNumber, window.BusinessDate, GetClientIp());
-
+                plateForLog = plateNumber;
+                var allocation = await _queueNumberAllocator.AllocateAsync(plateNumber, window, ipForLog);
                 if (allocation.Status == AllocationStatus.RateLimited)
                 {
                     var waitMinutes = Math.Max(1, (int)Math.Ceiling(allocation.RemainingSeconds / 60.0));
@@ -303,8 +320,19 @@ namespace XTECH_FRONTEND.Controllers.CarRegistration
 
                 if (!_queuePublisher.Publish(message))
                 {
-                    await _pendingStore.PushAsync(message);
-                    _logger.LogWarning("Publish lỗi, đã lưu outbox: {MessageId} - số {QueueNumber}", message.MessageId, message.QueueNumber);
+                    try
+                    {
+                        await _pendingStore.PushAsync(message);
+                        _logger.LogWarning("Publish lỗi, đã lưu outbox: {MessageId} - số {QueueNumber}", message.MessageId, message.QueueNumber);
+                    }
+                    catch (Exception outboxEx)
+                    {
+                        // Redis down + RabbitMQ fail: số đã cấp, vẫn trả thành công; cần recovery Mongo→SQL
+                        _logger.LogError(outboxEx, "Publish lỗi và không lưu được outbox Redis: {MessageId} - số {QueueNumber}",
+                            message.MessageId, message.QueueNumber);
+                        _ = Task.Run(() => LogHelper.InsertLogTelegram(
+                            $"registerV2 - mất outbox (Redis?): {plateNumber} số {message.QueueNumber} - {outboxEx.Message}"));
+                    }
                 }
 
                 var insertMongo = await _mongoService.Insert(registrationRecord);
@@ -334,8 +362,8 @@ namespace XTECH_FRONTEND.Controllers.CarRegistration
             }
             catch (Exception ex)
             {
-                _ = Task.Run(() => LogHelper.InsertLogTelegram("CarRegistrationController - RegisterCarV2: " + ex.Message));
-                _logger.LogError(ex, "Error processing car registration");
+                LogHelper.InsertRegistrationError("CarRegistrationController - RegisterCarV2", plateForLog, ipForLog, ex);
+                _logger.LogError(ex, "Error processing car registration for {Plate}", plateForLog);
                 return StatusCode(500, new CarRegistrationResponse
                 {
                     Success = false,

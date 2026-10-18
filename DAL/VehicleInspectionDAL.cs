@@ -129,6 +129,7 @@ namespace DAL
                     new SqlParameter("@CSNotes", (object?)model.CSNotes ?? DBNull.Value),
                     new SqlParameter("@VehicleWeightIn", (object?)model.VehicleWeightIn ?? DBNull.Value),
                     new SqlParameter("@VehicleWeightOut", (object?)model.VehicleWeightOut ?? DBNull.Value),
+                    new SqlParameter("@GoodsType", (object?)model.GoodsType ?? DBNull.Value),
 
                 };
 
@@ -658,6 +659,110 @@ namespace DAL
                 LogHelper.InsertLogTelegram("GetListCartoFactory - VehicleInspectionDAL: " + ex);
             }
             return null;
+        }
+
+        public async Task<List<VehicleWeighInSkuModel>> GetWeighInSkuByVehicleIds(IEnumerable<int> vehicleIds)
+        {
+            try
+            {
+                var ids = vehicleIds?.Where(x => x > 0).Distinct().ToList();
+                if (ids == null || ids.Count == 0) return new List<VehicleWeighInSkuModel>();
+                SqlParameter[] objParam = new SqlParameter[]
+                {
+                    new SqlParameter("@VehicleInspectionIds", string.Join(",", ids))
+                };
+                var dt = _DbWorker.GetDataTable(StoreProcedureConstant.SP_GetVehicleWeighInSkuByVehicleIds, objParam);
+                if (dt != null && dt.Rows.Count > 0)
+                    return dt.ToList<VehicleWeighInSkuModel>();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("GetWeighInSkuByVehicleIds - VehicleInspectionDAL: " + ex);
+            }
+            return new List<VehicleWeighInSkuModel>();
+        }
+
+        public async Task<VehicleWeighInSkuModel> InsertWeighInSku(int vehicleInspectionId, decimal weight, int? userId)
+        {
+            try
+            {
+                SqlParameter[] objParam = new SqlParameter[]
+                {
+                    new SqlParameter("@VehicleInspectionId", vehicleInspectionId),
+                    new SqlParameter("@Weight", SqlDbType.Decimal) { Precision = 18, Scale = 3, Value = weight },
+                    new SqlParameter("@CreatedBy", (object?)userId ?? DBNull.Value),
+                };
+                var dt = _DbWorker.GetDataTable(StoreProcedureConstant.SP_InsertVehicleWeighInSku, objParam);
+                if (dt != null && dt.Rows.Count > 0)
+                    return dt.ToList<VehicleWeighInSkuModel>().FirstOrDefault();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("InsertWeighInSku - VehicleInspectionDAL: " + ex);
+            }
+            return null;
+        }
+
+        public async Task<int> UpdateWeighInSku(long id, decimal weight, int? userId)
+        {
+            try
+            {
+                SqlParameter[] objParam = new SqlParameter[]
+                {
+                    new SqlParameter("@Id", id),
+                    new SqlParameter("@Weight", SqlDbType.Decimal) { Precision = 18, Scale = 3, Value = weight },
+                    new SqlParameter("@UpdatedBy", (object?)userId ?? DBNull.Value),
+                };
+                var dt = _DbWorker.GetDataTable(StoreProcedureConstant.SP_UpdateVehicleWeighInSku, objParam);
+                if (dt != null && dt.Rows.Count > 0 && dt.Columns.Contains("Result"))
+                    return Convert.ToInt32(dt.Rows[0]["Result"]);
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("UpdateWeighInSku - VehicleInspectionDAL: " + ex);
+            }
+            return -1;
+        }
+
+        public async Task<int> DeleteWeighInSku(long id)
+        {
+            try
+            {
+                SqlParameter[] objParam = new SqlParameter[]
+                {
+                    new SqlParameter("@Id", id),
+                };
+                var dt = _DbWorker.GetDataTable(StoreProcedureConstant.SP_DeleteVehicleWeighInSku, objParam);
+                if (dt != null && dt.Rows.Count > 0 && dt.Columns.Contains("Result"))
+                    return Convert.ToInt32(dt.Rows[0]["Result"]);
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("DeleteWeighInSku - VehicleInspectionDAL: " + ex);
+            }
+            return -1;
+        }
+
+        public async Task<int> ClearWeighInSkuByVehicleId(int vehicleInspectionId)
+        {
+            try
+            {
+                SqlParameter[] objParam = new SqlParameter[]
+                {
+                    new SqlParameter("@VehicleInspectionId", vehicleInspectionId),
+                };
+                var dt = _DbWorker.GetDataTable(StoreProcedureConstant.SP_ClearVehicleWeighInSkuByVehicleId, objParam);
+                if (dt != null && dt.Rows.Count > 0 && dt.Columns.Contains("Result"))
+                    return Convert.ToInt32(dt.Rows[0]["Result"]);
+                return 1;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("ClearWeighInSkuByVehicleId - VehicleInspectionDAL: " + ex);
+            }
+            return -1;
         }
     }
 }

@@ -6,15 +6,22 @@ namespace XTECH_FRONTEND.Services.Registration
 {
     /// <summary>
     /// Cấp số thứ tự bằng 1 script Lua chạy atomic trên Redis:
-    /// rate limit theo IP → chống trùng biển số → INCR counter của ngày làm việc.
+    /// sync floor (Mongo) → rate limit theo IP → chống trùng biển số → INCR counter của ngày làm việc.
     /// Redis thực thi script tuần tự nên N request đồng thời luôn nhận N số khác nhau.
     /// </summary>
-    public class RedisQueueNumberAllocator : IQueueNumberAllocator
+    public class RedisQueueNumberAllocator
     {
         // KEYS[1] = rate limit key, KEYS[2] = plate lock key, KEYS[3] = counter key
-        // ARGV[1] = rate limit, ARGV[2] = rate window (s), ARGV[3] = lock ttl (s), ARGV[4] = counter ttl (s)
+        // ARGV[1] = rate limit, ARGV[2] = rate window (s), ARGV[3] = lock ttl (s),
+        // ARGV[4] = counter ttl (s), ARGV[5] = floor (max đã cấp từ Mongo, đảm bảo tiếp tục đúng khi Redis sống lại)
         // Trả về {status, queueNumber, remainingSeconds}: status 1 = cấp mới, 0 = đã đăng ký, -1 = rate limited
         private const string AllocateScript = @"
+local floor = tonumber(ARGV[5]) or 0
+local cur = tonumber(redis.call('GET', KEYS[3]) or '0')
+if floor > cur then
+  redis.call('SET', KEYS[3], floor)
+  redis.call('EXPIRE', KEYS[3], ARGV[4])
+end
 local hits = redis.call('INCR', KEYS[1])
 if hits == 1 then redis.call('EXPIRE', KEYS[1], ARGV[2]) end
 if hits > tonumber(ARGV[1]) then
@@ -40,7 +47,13 @@ return {1, n, tonumber(ARGV[3])}";
             _options = options.Value;
         }
 
-        public async Task<AllocationResult> AllocateAsync(string plateNumber, DateTime businessDate, string clientIp)
+        public bool IsConnected => _redis.IsConnected;
+
+        public async Task<AllocationResult> AllocateAsync(
+            string plateNumber,
+            DateTime businessDate,
+            string clientIp,
+            int floor = 0)
         {
             var site = _options.Site;
             var day = businessDate.ToString("yyyyMMdd");
@@ -57,7 +70,8 @@ return {1, n, tonumber(ARGV[3])}";
                 _options.RateLimitPerWindow,
                 _options.RateLimitWindowSeconds,
                 _options.LockMinutes * 60,
-                CounterTtlSeconds
+                CounterTtlSeconds,
+                Math.Max(0, floor)
             };
 
             var db = _redis.GetDatabase(_options.RedisDb);

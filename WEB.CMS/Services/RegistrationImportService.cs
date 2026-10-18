@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Repositories.IRepositories;
 using System.Text;
 using Utilities;
+using Utilities.Contants;
 
 namespace WEB.CMS.Services
 {
@@ -35,6 +36,7 @@ namespace WEB.CMS.Services
         private static readonly SemaphoreSlim ImportLock = new SemaphoreSlim(1, 1);
 
         private readonly IVehicleInspectionRepository _vehicleInspectionRepository;
+        private readonly IAllCodeRepository _allCodeRepository;
         private readonly RedisConn _redisService;
         private readonly WorkQueueClient _workQueueClient;
         private readonly IConfiguration _configuration;
@@ -42,11 +44,13 @@ namespace WEB.CMS.Services
 
         public RegistrationImportService(
             IVehicleInspectionRepository vehicleInspectionRepository,
+            IAllCodeRepository allCodeRepository,
             RedisConn redisService,
             IConfiguration configuration,
             IOptions<DataBaseConfig> dataBaseConfig)
         {
             _vehicleInspectionRepository = vehicleInspectionRepository;
+            _allCodeRepository = allCodeRepository;
             _redisService = redisService;
             _configuration = configuration;
             _workQueueClient = new WorkQueueClient(configuration);
@@ -148,7 +152,9 @@ namespace WEB.CMS.Services
         {
             try
             {
-                string channel = _configuration["RegistrationConsumer:RealtimeChannel"] ?? "Add_ReceiveRegistration_BinhDinh";
+                // Rule: sau cut-off (TIME_RESET hôm nay) đến trước 00:00 → chỉ "Danh sách xe đăng ký" (RegisteredVehicle / kênh _DK).
+                // Từ 00:00 đến cut-off → "Danh sách xe đến nhà máy" (CartoFactory / kênh chính). F5 đọc SQL cùng rule này.
+                string channel = await ResolveRealtimeChannelAsync(record.RegistrationTime);
                 if (_redisService.EnsureConnected())
                 {
                     await _redisService.PublishAsync(channel, record);
@@ -166,6 +172,45 @@ namespace WEB.CMS.Services
                     _workQueueClient.SyncQueue(record);
                 }
             }
+        }
+
+        /// <summary>
+        /// Cut-off lấy động từ AllCode.TIME_RESET (màn Configuration). Không đọc được → 17:55.
+        /// </summary>
+        private async Task<string> ResolveRealtimeChannelAsync(DateTime registrationTime)
+        {
+            string factoryChannel = _configuration["RegistrationConsumer:RealtimeChannel"] ?? "Add_ReceiveRegistration_BinhDinh";
+            string registeredChannel = _configuration["RegistrationConsumer:RealtimeChannelRegistered"]
+                                       ?? (factoryChannel.EndsWith("_DK", StringComparison.Ordinal)
+                                           ? factoryChannel
+                                           : factoryChannel + "_DK");
+
+            var cutoff = await GetTodayCutoffAsync();
+            // Sau giờ cut-off hôm nay (và trước nửa đêm) → chỉ hiện ở danh sách đăng ký online
+            if (registrationTime >= cutoff) return registeredChannel;
+            return factoryChannel;
+        }
+
+        private async Task<DateTime> GetTodayCutoffAsync()
+        {
+            var hours = 17;
+            var minutes = 55;
+            try
+            {
+                var timeReset = await _allCodeRepository.GetListSortByName(AllCodeType.TIME_RESET);
+                if (timeReset != null && timeReset.Count > 0 && timeReset[0].UpdateTime.HasValue)
+                {
+                    hours = timeReset[0].UpdateTime.Value.Hour;
+                    minutes = timeReset[0].UpdateTime.Value.Minute;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.InsertLogTelegram("RegistrationImport - đọc TIME_RESET lỗi: " + ex.Message);
+            }
+
+            var now = DateTime.Now;
+            return new DateTime(now.Year, now.Month, now.Day, hours, minutes, 0);
         }
     }
 }
